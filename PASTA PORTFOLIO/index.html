@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lucas Amaral — Portfólio de BI & Analytics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0f1a;--bg2:#111827;--bg3:#1a2332;
+  --accent:#3b82f6;--accent2:#60a5fa;--accent-glow:rgba(59,130,246,.15);
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+  --border:#1e293b;--card:#0f172a;
+  --green:#22c55e;--orange:#f59e0b;--red:#ef4444;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:2rem;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 50% 50%,rgba(59,130,246,.08) 0%,transparent 60%);animation:pulse 8s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.1);opacity:1}}
+.hero-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1.2rem;border:1px solid var(--border);border-radius:99px;font-size:.8rem;color:var(--text2);margin-bottom:2rem;backdrop-filter:blur(8px);background:rgba(15,23,42,.6)}
+.hero-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.hero h1{font-family:'Playfair Display',serif;font-size:clamp(2.5rem,6vw,5rem);font-weight:900;line-height:1.1;margin-bottom:1rem;letter-spacing:-.02em}
+.hero h1 .accent{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{max-width:600px;color:var(--text2);font-size:1.1rem;line-height:1.7;margin-bottom:2.5rem}
+.hero-stats{display:flex;gap:3rem;flex-wrap:wrap;justify-content:center}
+.hero-stats .stat{text-align:center}
+.hero-stats .stat-value{font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--accent2)}
+.hero-stats .stat-label{font-size:.75rem;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-top:.25rem}
+.scroll-indicator{position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:.5rem;color:var(--text3);font-size:.7rem;letter-spacing:.15em;text-transform:uppercase}
+.scroll-indicator .arrow{width:1px;height:40px;background:linear-gradient(to bottom,var(--text3),transparent);animation:scrollDown 2s infinite}
+@keyframes scrollDown{0%{transform:translateY(-10px);opacity:0}50%{opacity:1}100%{transform:translateY(10px);opacity:0}}
+
+/* SECTION */
+.section{padding:6rem 2rem}
+.section-header{text-align:center;margin-bottom:4rem}
+.section-header h2{font-family:'Playfair Display',serif;font-size:clamp(1.8rem,3vw,2.5rem);font-weight:700;margin-bottom:.5rem}
+.section-header p{color:var(--text2);max-width:500px;margin:0 auto}
+.section-tag{display:inline-block;font-size:.7rem;text-transform:uppercase;letter-spacing:.15em;color:var(--accent);border:1px solid rgba(59,130,246,.3);padding:.3rem .8rem;border-radius:99px;margin-bottom:1rem}
+
+/* PROJECT GRID */
+.projects-grid{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:1.5rem}
+.project-card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:all .4s cubic-bezier(.4,0,.2,1);position:relative}
+.project-card:hover{transform:translateY(-4px);border-color:rgba(59,130,246,.4);box-shadow:0 20px 60px rgba(0,0,0,.4),0 0 40px var(--accent-glow)}
+.project-card .card-type{position:absolute;top:1rem;right:1rem;padding:.25rem .6rem;border-radius:6px;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;z-index:2}
+.card-type.pbi{background:rgba(243,186,47,.15);color:#f3ba2f;border:1px solid rgba(243,186,47,.25)}
+.card-type.html{background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.25)}
+.card-visual{height:180px;background:var(--bg3);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.card-visual .icon{font-size:3rem;opacity:.4}
+.card-visual::after{content:'';position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(to top,var(--card),transparent)}
+.card-body{padding:1.5rem}
+.card-body h3{font-size:1.15rem;font-weight:700;margin-bottom:.5rem}
+.card-body .card-desc{font-size:.85rem;color:var(--text2);line-height:1.6;margin-bottom:1rem;min-height:60px}
+.card-tags{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1.2rem}
+.card-tags span{padding:.2rem .55rem;border-radius:6px;font-size:.65rem;background:var(--bg2);color:var(--text3);border:1px solid var(--border)}
+.card-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;padding-top:1rem;border-top:1px solid var(--border)}
+.card-metrics .metric{text-align:center}
+.card-metrics .metric-val{font-size:.95rem;font-weight:700;color:var(--accent2)}
+.card-metrics .metric-lbl{font-size:.6rem;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
+.card-cta{display:flex;align-items:center;justify-content:center;gap:.5rem;padding:.8rem;margin:0 1.5rem 1.5rem;border-radius:10px;background:linear-gradient(135deg,rgba(59,130,246,.1),rgba(59,130,246,.05));border:1px solid rgba(59,130,246,.2);color:var(--accent2);font-size:.8rem;font-weight:600;transition:all .3s}
+.card-cta:hover{background:linear-gradient(135deg,rgba(59,130,246,.2),rgba(59,130,246,.1));transform:scale(1.02)}
+.card-cta svg{width:14px;height:14px}
+
+/* SKILLS */
+.skills-row{max-width:900px;margin:0 auto;display:flex;flex-wrap:wrap;justify-content:center;gap:1rem}
+.skill-chip{padding:.6rem 1.2rem;border-radius:10px;font-size:.8rem;background:var(--bg2);border:1px solid var(--border);color:var(--text2);transition:all .3s}
+.skill-chip:hover{border-color:var(--accent);color:var(--text)}
+
+/* CONTACT */
+.contact-row{display:flex;flex-wrap:wrap;justify-content:center;gap:1.5rem;max-width:700px;margin:0 auto}
+.contact-item{display:flex;align-items:center;gap:.6rem;padding:.7rem 1.2rem;border-radius:10px;background:var(--bg2);border:1px solid var(--border);font-size:.85rem;color:var(--text2);transition:border-color .3s}
+.contact-item:hover{border-color:var(--accent)}
+.contact-item svg{width:16px;height:16px;color:var(--accent2);flex-shrink:0}
+
+/* FOOTER */
+footer{text-align:center;padding:3rem 2rem;color:var(--text3);font-size:.75rem;border-top:1px solid var(--border)}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .projects-grid{grid-template-columns:1fr}
+  .hero-stats{gap:1.5rem}
+  .card-visual{height:140px}
+}
+
+/* VISUAL PATTERNS */
+.v-pattern{position:absolute;inset:0;opacity:.15}
+.v-pattern.geo{background:repeating-linear-gradient(45deg,transparent,transparent 20px,rgba(59,130,246,.05) 20px,rgba(59,130,246,.05) 21px)}
+.v-pattern.dots{background:radial-gradient(circle,rgba(59,130,246,.15) 1px,transparent 1px);background-size:20px 20px}
+.v-pattern.lines{background:repeating-linear-gradient(0deg,transparent,transparent 30px,rgba(59,130,246,.04) 30px,rgba(59,130,246,.04) 31px)}
+.v-pattern.grid{background:linear-gradient(rgba(59,130,246,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.06) 1px,transparent 1px);background-size:40px 40px}
+.v-pattern.diag{background:repeating-linear-gradient(-45deg,transparent,transparent 15px,rgba(34,197,94,.06) 15px,rgba(34,197,94,.06) 16px)}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge"><span class="dot"></span> Disponível para novas oportunidades</div>
+  <h1>Lucas <span class="accent">Amaral</span></h1>
+  <p>Analista de Logística & BI com 16 anos de experiência em operações, transportes e inteligência de dados. Power BI · Looker Studio · Data Analytics.</p>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-value">8</div><div class="stat-label">Projetos</div></div>
+    <div class="stat"><div class="stat-value">200+</div><div class="stat-label">Medidas DAX</div></div>
+    <div class="stat"><div class="stat-value">5</div><div class="stat-label">Setores</div></div>
+    <div class="stat"><div class="stat-value">16</div><div class="stat-label">Anos XP</div></div>
+  </div>
+  <div class="scroll-indicator"><span>Scroll</span><div class="arrow"></div></div>
+</section>
+
+<!-- PROJECTS -->
+<section class="section" id="projetos">
+  <div class="section-header">
+    <span class="section-tag">Portfólio</span>
+    <h2>Projetos</h2>
+    <p>Dashboards interativos em Power BI e aplicações HTML para gestão operacional, logística e inteligência de negócio.</p>
+  </div>
+  <div class="projects-grid">
+
+    <!-- GAZPROOM -->
+    <a href="projects/gazproom.html" class="project-card">
+      <span class="card-type pbi">Power BI</span>
+      <div class="card-visual"><div class="v-pattern geo"></div><span class="icon">🔥</span></div>
+      <div class="card-body">
+        <h3>GAZPROOM — Gestão Operacional</h3>
+        <p class="card-desc">Painel completo para transportadora de GLP: receita, OTD/OTIF, frota, motoristas, manutenção e simulador What-If de diesel.</p>
+        <div class="card-tags"><span>Logística</span><span>GLP</span><span>Star Schema</span><span>What-If</span><span>Drill-Through</span></div>
+        <div class="card-metrics">
+          <div class="metric"><div class="metric-val">54</div><div class="metric-lbl">Medidas DAX</div></div>
+          <div class="metric"><div class="metric-val">14</div><div class="metric-lbl">Tabelas</div></div>
+          <div class="metric"><div class="metric-val">15</div><div class="metric-lbl">Páginas</div></div>
+        </div>
+      </div>
+      <div class="card-cta">Abrir projeto <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+    </a>
+
+    <!-- STEELCORE -->
+    <a href="projects/steelcore.html" class="project-card">
+      <span class="card-type pbi">Power BI</span>
+      <div class="card-visual"><div class="v-pattern dots"></div><span class="icon">⚙️</span></div>
+      <div class="card-body">
+        <h3>SteelCore — PCP Industrial</h3>
+        <p class="card-desc">Painel de Planejamento e Controle da Produção para metalúrgica: OEE, MTBF/MTTR, gestão de paradas, custos e simulação.</p>
+        <div class="card-tags"><span>Indústria</span><span>OEE</span><span>PCP</span><span>MTBF</span><span>What-If</span></div>
+        <div class="card-metrics">
+          <div class="metric"><div class="metric-val">70+</div><div class="metric-lbl">Medidas DAX</div></div>
+          <div class="metric"><div class="metric-val">8</div><div class="metric-lbl">Tabelas</div></div>
+          <div class="metric"><div class="metric-val">11</div><div class="metric-lbl">Páginas</div></div>
+        </div>
+      </div>
+      <div class="card-cta">Abrir projeto <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+    </a>
+
+    <!-- VIASEGUR -->
+    <a href="projects/viasegur.html" class="project-card">
+      <span class="card-type pbi">Power BI</span>
+      <div class="card-visual"><div class="v-pattern lines"></div><span class="icon">🛡️</span></div>
+      <div class="card-body">
+        <h3>ViaSegur — SSMA</h3>
+        <p class="card-desc">Gestão integrada de Saúde, Segurança e Meio Ambiente para transportadora de produtos perigosos. TFA, TGA, compliance ANTT.</p>
+        <div class="card-tags"><span>SSMA</span><span>Transporte</span><span>Compliance</span><span>NR-20</span><span>ANTT</span></div>
+        <div class="card-metrics">
+          <div class="metric"><div class="metric-val">~40</div><div class="metric-lbl">Medidas DAX</div></div>
+          <div class="metric"><div class="metric-val">150</div><div class="metric-lbl">Veículos</div></div>
+          <div class="metric"><div class="metric-val">6</div><div class="metric-lbl">Bases</div></div>
+        </div>
+      </div>
+      <div class="card-cta">Abrir projeto <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+    </a>
+
+    <!-- VITAMED -->
+    <a href="projects/vitamed.html" class="project-card">
+      <span class="card-type pbi">Power BI</span>
+      <div class="card-visual"><div class="v-pattern grid"></div><span class="icon">💊</span></div>
+      <div class="card-body">
+        <h3>VitaMed — Comercial Farma</h3>
+        <p class="card-desc">Dashboard comercial para distribuidora farmacêutica: performance de representantes, mix de produtos, metas e sazonalidade.</p>
+        <div class="card-tags"><span>Comercial</span><span>Farma</span><span>YoY/MoM</span><span>Ranking</span><span>Tooltips</span></div>
+        <div class="card-metrics">
+          <div class="metric"><div class="metric-val">38</div><div class="metric-lbl">Medidas DAX</div></div>
+          <div class="metric"><div class="metric-val">21K</div><div class="metric-lbl">Registros</div></div>
+          <div class="metric"><div class="metric-val">9</div><div class="metric-lbl">Páginas</div></div>
+        </div>
+      </div>
+      <div class="card-cta">Abrir projeto <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+    </a>
+
+    <!-- VOLAGAS -->
+    <a href="projects/volagas.html" class="project-card">
+      <span class="card-type pbi">Power BI</span>
+      <div class="card-visual"><div class="v-pattern diag"></div><span class="icon">🚚</span></div>
+      <div class="card-body">
+        <h3>VolaGás — Faturamento</h3>
+        <p class="card-desc">Painel de faturamento para transporte de gás envasado: receita por rota, R$/tonelada, ocupação de carga e análise por filial.</p>
+        <div class="card-tags"><span>Faturamento</span><span>Transporte</span><span>R$/ton</span><span>Star Schema</span></div>
+        <div class="card-metrics">
+          <div class="metric"><div class="metric-val">24</div><div class="metric-lbl">Medidas DAX</div></div>
+          <div class="metric"><div class="metric-val">8.4K</div><div class="metric-lbl">Viagens</div></div>
+          <div class="metric"><div class="metric-val">6</div><div class="metric-lbl">Filiais</div></div>
+        </div>
+      </div>
+      <div class="card-cta">Abrir projeto <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+    </a>
+
+    <!-- HTML: PRODUTIVIDADE FROTA -->
+    <a href="html-projects/dashboard-produtividade-frota.html" class="project-card">
+      <span class="card-type html">HTML</span>
+      <div class="card-visual" style="background:#0f2a1a"><div class="v-pattern geo"></div><span class="icon">📊</span></div>
+      <div class="card-body">
+        <h3>Dashboard Produtividade de Frota</h3>
+        <p class="card-desc">Monitoramento de produtividade da frota com tempos de carga, descarga e destroca. Projeto implementado na TBM Logística.</p>
+        <div class="card-tags"><span>HTML/CSS/JS</span><span>Produtividade</span><span>Frota</span><span>KPIs</span></div>
+        <div class="card-metrics">
+          <div class="metric"><div class="metric-val">TBM</div><div class="metric-lbl">Empresa</div></div>
+          <div class="metric"><div class="metric-val">Live</div><div class="metric-lbl">Status</div></div>
+          <div class="metric"><div class="metric-val">Web</div><div class="metric-lbl">Plataforma</div></div>
+        </div>
+      </div>
+      <div class="card-cta">Abrir dashboard <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+    </a>
+
+    <!-- HTML: TEMPO OPERAÇÃO -->
+    <a href="html-projects/tempo-operacao.html" class="project-card">
+      <span class="card-type html">HTML</span>
+      <div class="card-visual" style="background:#1a1a2e"><div class="v-pattern dots"></div><span class="icon">⏱️</span></div>
+      <div class="card-body">
+        <h3>Monitoramento Tempo de Operação</h3>
+        <p class="card-desc">Análise de status da frota GLP com monitoramento de tempos operacionais por veículo e indicadores de disponibilidade.</p>
+        <div class="card-tags"><span>HTML/CSS/JS</span><span>Tempo Real</span><span>GLP</span><span>Status</span></div>
+        <div class="card-metrics">
+          <div class="metric"><div class="metric-val">GLP</div><div class="metric-lbl">Segmento</div></div>
+          <div class="metric"><div class="metric-val">Live</div><div class="metric-lbl">Status</div></div>
+          <div class="metric"><div class="metric-val">Web</div><div class="metric-lbl">Plataforma</div></div>
+        </div>
+      </div>
+      <div class="card-cta">Abrir dashboard <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+    </a>
+
+    <!-- HTML: ORION OPS WMS -->
+    <a href="html-projects/orion-ops-wms.html" class="project-card">
+      <span class="card-type html">HTML</span>
+      <div class="card-visual" style="background:#1a0f2e"><div class="v-pattern lines"></div><span class="icon">📦</span></div>
+      <div class="card-body">
+        <h3>OrionOps — WMS Operacional</h3>
+        <p class="card-desc">Sistema de gestão de armazém (WMS) com controle de estoque, movimentações e indicadores de warehouse management.</p>
+        <div class="card-tags"><span>HTML/CSS/JS</span><span>WMS</span><span>Estoque</span><span>Warehouse</span></div>
+        <div class="card-metrics">
+          <div class="metric"><div class="metric-val">WMS</div><div class="metric-lbl">Tipo</div></div>
+          <div class="metric"><div class="metric-val">Live</div><div class="metric-lbl">Status</div></div>
+          <div class="metric"><div class="metric-val">Web</div><div class="metric-lbl">Plataforma</div></div>
+        </div>
+      </div>
+      <div class="card-cta">Abrir dashboard <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+    </a>
+
+  </div>
+</section>
+
+<!-- STACK -->
+<section class="section">
+  <div class="section-header">
+    <span class="section-tag">Stack</span>
+    <h2>Ferramentas & Competências</h2>
+  </div>
+  <div class="skills-row">
+    <span class="skill-chip">Power BI</span>
+    <span class="skill-chip">DAX</span>
+    <span class="skill-chip">Star Schema</span>
+    <span class="skill-chip">Power Query</span>
+    <span class="skill-chip">Looker Studio</span>
+    <span class="skill-chip">Excel Avançado</span>
+    <span class="skill-chip">Python</span>
+    <span class="skill-chip">HTML/CSS/JS</span>
+    <span class="skill-chip">IA Generativa</span>
+    <span class="skill-chip">CT-e / MDF-e</span>
+    <span class="skill-chip">TMS</span>
+    <span class="skill-chip">ERP (Benner, Brudam, BSoft)</span>
+    <span class="skill-chip">Cross-Docking</span>
+    <span class="skill-chip">OTD / OTIF</span>
+    <span class="skill-chip">OEE / MTBF</span>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section class="section">
+  <div class="section-header">
+    <span class="section-tag">Contato</span>
+    <h2>Vamos conversar</h2>
+  </div>
+  <div class="contact-row">
+    <a href="mailto:Lucas21Amaral@gmail.com" class="contact-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 4 10 8 10-8"/></svg>
+      Lucas21Amaral@gmail.com
+    </a>
+    <a href="https://www.linkedin.com/in/lucas-amaral-35a856105/" target="_blank" class="contact-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+      LinkedIn
+    </a>
+    <span class="contact-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 5.13 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.81.36 1.6.66 2.35a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.73-1.23a2 2 0 0 1 2.11-.45c.75.3 1.54.53 2.35.66a2 2 0 0 1 1.72 2.04z"/></svg>
+      (51) 99964-2300
+    </span>
+  </div>
+</section>
+
+<footer>
+  <p>Lucas do Amaral Cerveira · Portfólio de BI & Analytics · Dados fictícios para fins demonstrativos</p>
+</footer>
+
+</body>
+</html>

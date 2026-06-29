@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tempo de Operação — Frota GLP</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f0f0f0;
+  --bg-card: #ffffff;
+  --bg-card-alt: #f7f7f7;
+  --border: #e0e0e0;
+  --text: #1a1a1a;
+  --text-muted: #6b6b6b;
+  --text-light: #999;
+  --accent-cdb: #2563eb;
+  --accent-cdb-bg: #eff6ff;
+  --accent-cia: #059669;
+  --accent-cia-bg: #ecfdf5;
+  --accent-warn: #d97706;
+  --accent-warn-bg: #fffbeb;
+  --accent-red: #dc2626;
+  --accent-red-bg: #fef2f2;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.06);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.08);
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── HEADER ─── */
+.header {
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  padding: 20px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-left { display:flex; align-items:center; gap:16px; }
+.header-logo-img {
+  height:44px; width:auto; object-fit:contain;
+}
+.header-title { font-size:20px; font-weight:700; letter-spacing:-.3px; }
+.header-sub { font-size:13px; color:var(--text-muted); margin-top:1px; }
+.header-right { display:flex; align-items:center; gap:12px; }
+.header-badge {
+  font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:500;
+  padding:6px 12px; border-radius:20px; background:var(--bg); color:var(--text-muted);
+}
+
+/* ─── FILTERS ─── */
+.filters-bar {
+  padding: 16px 32px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+}
+.filter-group {
+  display:flex; align-items:center; gap:6px;
+}
+.filter-label {
+  font-size:12px; font-weight:600; color:var(--text-muted);
+  text-transform:uppercase; letter-spacing:.5px;
+}
+.filter-btn {
+  font-family:'DM Sans',sans-serif;
+  font-size:13px; font-weight:500; padding:7px 16px;
+  border:1.5px solid var(--border); border-radius:20px;
+  background:#fff; color:var(--text); cursor:pointer;
+  transition: all .15s;
+}
+.filter-btn:hover { border-color:#aaa; }
+.filter-btn.active {
+  background:var(--text); color:#fff; border-color:var(--text);
+}
+.filter-btn.active-cdb {
+  background:var(--accent-cdb); color:#fff; border-color:var(--accent-cdb);
+}
+.filter-btn.active-cia {
+  background:var(--accent-cia); color:#fff; border-color:var(--accent-cia);
+}
+.filter-sep {
+  width:1px; height:28px; background:var(--border); margin:0 4px;
+}
+.filter-select {
+  font-family:'DM Sans',sans-serif;
+  font-size:13px; font-weight:500; padding:7px 12px;
+  border:1.5px solid var(--border); border-radius:8px;
+  background:#fff; color:var(--text); cursor:pointer;
+  appearance:auto;
+}
+.filter-date-input {
+  font-family:'DM Sans',sans-serif;
+  font-size:13px; padding:6px 12px;
+  border:1.5px solid var(--border); border-radius:8px;
+  background:#fff; color:var(--text);
+}
+
+/* ─── MAIN GRID ─── */
+.main { padding:24px 32px; max-width:1480px; margin:0 auto; }
+
+/* ─── KPI CARDS ─── */
+.kpi-grid {
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap:16px;
+  margin-bottom:24px;
+}
+.kpi-card {
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:20px;
+  box-shadow:var(--shadow-sm);
+  transition: transform .15s, box-shadow .15s;
+}
+.kpi-card:hover { transform:translateY(-2px); box-shadow:var(--shadow-md); }
+.kpi-label {
+  font-size:11px; font-weight:600; text-transform:uppercase;
+  letter-spacing:.6px; color:var(--text-muted); margin-bottom:8px;
+}
+.kpi-value {
+  font-family:'JetBrains Mono',monospace;
+  font-size:28px; font-weight:700; line-height:1;
+}
+.kpi-sub {
+  font-size:12px; color:var(--text-light); margin-top:6px;
+}
+.kpi-dot {
+  display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:4px;
+}
+
+/* ─── CHART AREA ─── */
+.section-row {
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:16px;
+  margin-bottom:24px;
+}
+.section-full { margin-bottom:24px; }
+.card {
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow-sm);
+  overflow:hidden;
+}
+.card-header {
+  padding:16px 20px 12px;
+  display:flex; align-items:center; justify-content:space-between;
+  border-bottom:1px solid #f0f0f0;
+}
+.card-title { font-size:15px; font-weight:600; }
+.card-badge {
+  font-size:11px; font-weight:500; padding:3px 10px;
+  border-radius:12px; background:var(--bg);
+}
+.card-body { padding:20px; }
+
+/* ─── BAR CHART ─── */
+.bar-chart { width:100%; overflow-x:auto; }
+.bar-chart-inner { min-width:600px; }
+.bar-row {
+  display:flex; align-items:center; gap:10px;
+  padding:6px 0; border-bottom:1px solid #f8f8f8;
+}
+.bar-row:last-child { border-bottom:none; }
+.bar-label {
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px; font-weight:500; width:90px; flex-shrink:0;
+  white-space:nowrap;
+}
+.bar-track {
+  flex:1; height:24px; background:#f5f5f5; border-radius:4px;
+  position:relative; overflow:hidden;
+}
+.bar-fill {
+  height:100%; border-radius:4px;
+  transition: width .4s ease;
+  display:flex; align-items:center; padding-left:8px;
+}
+.bar-fill span {
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px; font-weight:600; color:#fff;
+  white-space:nowrap;
+}
+.bar-fill.cdb { background: linear-gradient(90deg, var(--accent-cdb), #3b82f6); }
+.bar-fill.cia { background: linear-gradient(90deg, var(--accent-cia), #10b981); }
+
+/* ─── TABLE ─── */
+.table-wrap { overflow-x:auto; max-height:520px; overflow-y:auto; }
+.data-table {
+  width:100%; border-collapse:separate; border-spacing:0;
+  font-size:13px;
+}
+.data-table thead { position:sticky; top:0; z-index:2; }
+.data-table th {
+  padding:10px 14px; text-align:left;
+  font-size:11px; font-weight:600; text-transform:uppercase;
+  letter-spacing:.5px; color:var(--text-muted);
+  background:#fafafa; border-bottom:2px solid var(--border);
+  white-space:nowrap;
+}
+.data-table td {
+  padding:10px 14px; border-bottom:1px solid #f3f3f3;
+  font-family:'JetBrains Mono',monospace; font-size:12px;
+  white-space:nowrap;
+}
+.data-table tbody tr:hover { background:#f8faff; }
+.data-table .cell-time { font-weight:500; }
+.data-table .cell-tempo-cdb { color:var(--accent-cdb); font-weight:600; }
+.data-table .cell-tempo-cia { color:var(--accent-cia); font-weight:600; }
+.tag {
+  display:inline-block; padding:3px 10px; border-radius:4px;
+  font-size:11px; font-weight:700; text-transform:uppercase;
+}
+.tag-normal { background:#dcfce7; color:#16a34a; }
+.tag-warn { background:#fef9c3; color:#a16207; }
+.tag-critical { background:var(--accent-red-bg); color:var(--accent-red); }
+.tag-cdb { background:var(--accent-cdb-bg); color:var(--accent-cdb); }
+.tag-cia { background:var(--accent-cia-bg); color:var(--accent-cia); }
+.tag-alert { background:var(--accent-red-bg); color:var(--accent-red); }
+
+/* ─── TIMELINE CHART (canvas-like with divs) ─── */
+.timeline-chart { position:relative; width:100%; min-height:360px; }
+.timeline-canvas {
+  width:100%; height:340px;
+  position:relative; overflow-x:auto; overflow-y:hidden;
+}
+.timeline-inner { min-width:100%; height:100%; position:relative; }
+.timeline-gridline {
+  position:absolute; left:0; right:0;
+  border-top:1px dashed #eee;
+}
+.timeline-gridlabel {
+  position:absolute; left:4px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px; color:var(--text-light);
+}
+.timeline-bar {
+  position:absolute; border-radius:3px;
+  cursor:pointer; transition:opacity .15s;
+  min-width:2px;
+}
+.timeline-bar:hover { opacity:.8; }
+.timeline-bar .tooltip {
+  display:none; position:absolute; bottom:calc(100% + 6px);
+  left:50%; transform:translateX(-50%);
+  background:#1a1a1a; color:#fff; padding:6px 10px;
+  border-radius:6px; font-size:11px; white-space:nowrap; z-index:10;
+  font-family:'DM Sans',sans-serif;
+}
+.timeline-bar:hover .tooltip { display:block; }
+.timeline-xlabel {
+  position:absolute; bottom:0;
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px; color:var(--text-light);
+  transform:rotate(-45deg); transform-origin:top left;
+  white-space:nowrap;
+}
+
+/* ─── HEATMAP ─── */
+.heatmap-grid {
+  display:grid; gap:3px;
+}
+.heatmap-cell {
+  border-radius:3px; min-height:28px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px; font-weight:600;
+  cursor:pointer; transition: transform .1s;
+  position:relative;
+}
+.heatmap-cell:hover { transform:scale(1.1); z-index:2; }
+.heatmap-header {
+  font-family:'DM Sans',sans-serif;
+  font-size:11px; font-weight:600; color:var(--text-muted);
+  display:flex; align-items:center; justify-content:center;
+}
+.heatmap-row-label {
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px; font-weight:500; color:var(--text-muted);
+  display:flex; align-items:center;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width:900px) {
+  .section-row { grid-template-columns:1fr; }
+  .main { padding:16px; }
+  .header { padding:16px; }
+  .filters-bar { padding:12px 16px; }
+  .kpi-grid { grid-template-columns:repeat(2,1fr); }
+}
+@media (max-width:600px) {
+  .kpi-grid { grid-template-columns:1fr; }
+}
+
+/* ─── REPORT BUTTON ─── */
+.report-btn {
+  font-family:'DM Sans',sans-serif;
+  font-size:13px; font-weight:600;
+  padding:9px 20px; border-radius:8px;
+  border:none; background:var(--accent-cdb); color:#fff;
+  cursor:pointer; display:flex; align-items:center; gap:8px;
+  transition: background .15s, transform .1s;
+  white-space:nowrap;
+}
+.report-btn:hover { background:#1d4ed8; transform:translateY(-1px); }
+.report-btn:active { transform:translateY(0); }
+.import-btn {
+  font-family:'DM Sans',sans-serif;
+  font-size:13px; font-weight:600;
+  padding:9px 20px; border-radius:8px;
+  border:none; background:#16a34a; color:#fff;
+  cursor:pointer; display:flex; align-items:center; gap:8px;
+  transition: background .15s, transform .1s;
+  white-space:nowrap;
+}
+.import-btn:hover { background:#15803d; transform:translateY(-1px); }
+.import-btn:active { transform:translateY(0); }
+.import-btn input[type="file"] { display:none; }
+
+/* ─── MODAL ─── */
+.modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,.45);
+  z-index:1000; display:none; align-items:center; justify-content:center;
+  backdrop-filter:blur(4px);
+}
+.modal-overlay.open { display:flex; }
+.modal {
+  background:#fff; border-radius:16px; box-shadow:0 24px 48px rgba(0,0,0,.2);
+  width:92%; max-width:900px; max-height:88vh;
+  display:flex; flex-direction:column; overflow:hidden;
+  animation: modalIn .25s ease;
+}
+@keyframes modalIn {
+  from { opacity:0; transform:translateY(20px) scale(.97); }
+  to { opacity:1; transform:translateY(0) scale(1); }
+}
+.modal-header {
+  padding:20px 24px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.modal-header h2 {
+  font-size:18px; font-weight:700; display:flex; align-items:center; gap:10px;
+}
+.modal-header .critical-dot {
+  width:10px; height:10px; border-radius:50%; background:var(--accent-red);
+  animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+  0%,100% { box-shadow:0 0 0 0 rgba(220,38,38,.4); }
+  50% { box-shadow:0 0 0 6px rgba(220,38,38,0); }
+}
+.modal-close {
+  width:36px; height:36px; border-radius:8px; border:1px solid var(--border);
+  background:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  font-size:18px; color:var(--text-muted); transition:background .15s;
+}
+.modal-close:hover { background:var(--bg); }
+.modal-body { padding:24px; overflow-y:auto; flex:1; background:#fafafa; }
+.modal-footer {
+  padding:16px 24px; border-top:1px solid var(--border);
+  display:flex; justify-content:flex-end; gap:10px;
+}
+.modal-footer button {
+  font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600;
+  padding:9px 20px; border-radius:8px; cursor:pointer; transition:all .15s;
+}
+.btn-secondary { border:1px solid var(--border); background:#fff; color:var(--text); }
+.btn-secondary:hover { background:var(--bg); }
+.btn-primary { border:none; background:var(--accent-cdb); color:#fff; }
+.btn-primary:hover { background:#1d4ed8; }
+
+/* Report cards */
+.report-vehicle {
+  border:1px solid var(--border); border-radius:var(--radius);
+  margin-bottom:16px; overflow:hidden;
+}
+.report-vehicle-header {
+  padding:14px 18px; display:flex; align-items:center; justify-content:space-between;
+  background:var(--accent-red-bg); border-bottom:1px solid #fecaca;
+}
+.report-vehicle-plate {
+  font-family:'JetBrains Mono',monospace;
+  font-size:16px; font-weight:700;
+}
+.report-vehicle-tag {
+  font-size:11px; font-weight:600; padding:3px 10px;
+  border-radius:12px; background:var(--accent-red); color:#fff;
+}
+.report-vehicle-body { padding:16px 18px; }
+.report-stats {
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:12px; margin-bottom:12px;
+}
+.report-stat {
+  background:var(--bg); border-radius:8px; padding:10px 14px;
+}
+.report-stat-label {
+  font-size:10px; font-weight:600; text-transform:uppercase;
+  letter-spacing:.5px; color:var(--text-muted); margin-bottom:4px;
+}
+.report-stat-value {
+  font-family:'JetBrains Mono',monospace;
+  font-size:18px; font-weight:700;
+}
+.report-records-title {
+  font-size:12px; font-weight:600; color:var(--text-muted);
+  text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px;
+}
+.report-records-table {
+  width:100%; border-collapse:collapse; font-size:12px;
+}
+.report-records-table th {
+  text-align:left; padding:6px 10px; font-weight:600;
+  color:var(--text-muted); font-size:10px; text-transform:uppercase;
+  letter-spacing:.4px; border-bottom:1px solid var(--border);
+}
+.report-records-table td {
+  padding:6px 10px; font-family:'JetBrains Mono',monospace;
+  font-size:11px; border-bottom:1px solid #f5f5f5;
+}
+.report-records-table tr:last-child td { border-bottom:none; }
+.report-summary {
+  background:var(--accent-red-bg); border:1px solid #fecaca;
+  border-radius:var(--radius); padding:16px 20px; margin-bottom:20px;
+}
+.report-summary h3 {
+  font-size:14px; font-weight:700; color:var(--accent-red); margin-bottom:8px;
+}
+.report-summary p {
+  font-size:13px; color:var(--text); line-height:1.6;
+}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar { width:6px; height:6px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:#ccc; border-radius:3px; }
+
+/* ─── ANIMATIONS ─── */
+@keyframes fadeInUp {
+  from { opacity:0; transform:translateY(12px); }
+  to { opacity:1; transform:translateY(0); }
+}
+.animate-in {
+  animation: fadeInUp .4s ease both;
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKcAAABqCAYAAADZYEGGAAABCGlDQ1BJQ0MgUHJvZmlsZQAAeJxjYGA8wQAELAYMDLl5JUVB7k4KEZFRCuwPGBiBEAwSk4sLGHADoKpv1yBqL+viUYcLcKakFicD6Q9ArFIEtBxopAiQLZIOYWuA2EkQtg2IXV5SUAJkB4DYRSFBzkB2CpCtkY7ETkJiJxcUgdT3ANk2uTmlyQh3M/Ck5oUGA2kOIJZhKGYIYnBncAL5H6IkfxEDg8VXBgbmCQixpJkMDNtbGRgkbiHEVBYwMPC3MDBsO48QQ4RJQWJRIliIBYiZ0tIYGD4tZ2DgjWRgEL7AwMAVDQsIHG5TALvNnSEfCNMZchhSgSKeDHkMyQx6QJYRgwGDIYMZAKbWPz9HbOBQAABVEUlEQVR42u29eZBd1Zkn+DvLvfftL/fUjpTaJSQkIYQAgREIGgM2eMEDbttlV3VVdU+Xu2qmIrqja2Ki/+mJ6OiaiO6pqa62a6psY7ugXBg3NiAWAwIEQgYEEkICLWhL7ZnK7a13OefMH/d+N897Skl4wSztp3iRqcyX995zzne+5ff9vu8w3/fxq7wYY/hNvowxLdd+f9fnMOCAAZB8XDMA0ODQ8bVM/FUkX5nmk/fkHD4kuANwADrywXQER2qAG0BHAOfQYQSIDBj34MOBH2lAcrgAvBDgevL+6XPQPRgARmPTk79hyVcj8UG+OOcXnEtjzG98HX+TL4lPwsuaX240NC18KiKx0HJLiJHIi+MAzUADRiPjOhBSAFrBNH0AHMzzAMOgIgYmAc41PMlhAGiTCB831n2Yffk2wYw3FKABw38rU0Obfioh/CgLJgCwj7fmpMUmLXW+UNL/WSIMbFJtAgAUM3CkAwYgijSiQEEyAenyyUuxWAiV0WAi/r+GQhSFcLjT8gwXnC/TJqu2Zv2gFzmZz4+6MH4ChRMtAvn+FpungmJ0FP+EuRCSp1o1DIEoAoSItSsYYDQAFsKYCGAaXAiEhsWuhWWqbQGMlSqf3ByGt6hvw6baTB+cgH4cNOYnxKzrZJl1KpSTy85bhFFPIZycaThOBmGzCW0iCOlCG6DuA4wDXh4wBlAMUIGB0SEykgHKxBLMGQADxeg5THJdS0syJFJN081sm3++Kv0tmPePuq/5ifE5Y1NuWp1Pw5PveKpNueFJsBT/n5n4cybUcLwMwIBm6EM7AjLLoWAw7FdR8PLxJLkAghAQ2fgifhBLIWnbxP4n3mh8f4Y231LDQLT4yL/VuTLmY+VzfgKE07T6dWbShNrmOzatsWDqJHACgDDUkJxDsQDGVQB8BAjx2oHt5qVtW7Huqqtw+eIV3+wWPX8tXJEEMw6gBRBwCAYYYdJInMVXT/U2Pd557kaiVT9o8SBN+XEU0I+1z2kYRebxSvNEMJnh4FNEwzqxqGngxDSkkGiEDTAngkaAg2PvmOe3/xw7976Oieo4Okpl3HP3/4Jr5t7ABLKQOouMKgIhA2R8TUKnGNqFdFIwYzeDA4bHEX0inNyYls9+EMJJ82ubdvo55/yTJ5y/rZ13oeszxmItyA2UUmAAJJOAEtCRhgCHEPFnAz+EEBzCE9DGQJkInAOKa0QsAqAwas7+/vadz//91jeewbHh9xCgBkgDCQc5UcIt19yBO67+/O+VMP37UB4y2gNULG9BADAGOJlkE4QRNBSk4wBGJZuCp1rbMJ5CW8Lo35bbecF51FqDc54KahRFYIxBJBOolPqtBFS0gWgTffzNumFQYBAaAI8FkoODq1ihGg24GQcQgNYK9WYN0uPgwkGEJhQivHXyDfPSq8/hrfd2YLRxCiwXQGQYmNBoNnz4QRNPv/wE6rXw/jtu+OKMPnnZf6obBs9xITTgklA2DIxREFkJziRMpMC4jLUpOx9Z0AwQ5sOdP845tNZQSsEYkwqpLYDt/ycBCoIAmUzmA/GHPxGaUzEg1AZCAw6XECxZ+zD5nAD8oAktFLjHwbiGhkaIJkajkT979Pkf/5f9J97B4KlDaLI6RF5D8RChrscTpgVcZBBVBbwoj3XLr8ftG+/Gwu5lzEUWfsVHwSlBuBzQgAriRRZCgPHYqdQshowM04nm1Jbm5B+q5uScQymVak/SlhTRG2OgtY7HY2nZX0fo3u/PP/5mHRwaJvEzkwBEA8wYaACOx6CZQl3XEZgGpBBQiPDK3m3msWd+gkPDexHIJrwcR6aYgRIB6s0qNAM8z4OAQLPiQ0YuhM5BBg7mTBvAxus24dpl17NO9MCBiyCMILmE5IkmUUAUKkgpLJQghp0M0wCLzTlvCeA+BDBO69Rkc85TYdRawxgDz/OglGoRZDL59Le/rHBeSDA/UdE6MwCDgmQx3mj05GRDcHABRExjLBiD48apnb2je82jP38Ub+5+HSONs3DKGnBDaC4QBgqGG4C5YIxBRRzNZgDXySAIQrgsgJMX2HNkB85OHMdo9bS5bunGB2YV5/1z6Qg0ESJsTCDnleDKDBjj0G3rIEwCfF0gY/RhwEtkykkwSWuSMAZBACFE+jbGIIoihGEIz/N+o5rTFvaPteYkZ10IAWZi3yk25RxMxKhiHTUABucwjKdfedr8/KWncGJsENzjUKyJkNfAHQMhJITg8BwHUkoEfohGvY6M48JzXOhIQUcRHCFjJEAb5GUJ8zoX4eoV1+HqK6/7sw7W/f8IeFCGwWUZSHhAZAkgS1QqaU8QDso/dOGkuSSXhMx7DLfFPpLjOOfl6kmr/rpmfqq1/tgLJ1NR4hslmQ8hwARHYEI0dB2OlHjlwCvmqe1P4/V3X8NwcwhOSYAXBPywARgFyQEGAQYNyQUyrpv4rhrlYgGnTpxENpdBuVzE+Pg4tI5QLhZjnLOeRTnThaXzl+Oaq27A8umrmYs8JDIABIR2IHQsoJwATqYBRIm5523ZrA8vYidBFUKkGtNxHIRhCCll+j0pBNKiH1Qi4CMhnKYli8djmhvlqZlJcUzDABgJAw7G4kBCGBOziJSCZhrcc2C4wURQxWhzFD975mfmF3t+gX2n9gMFQHZwBDJEwHwAGh53wVTsYwkOSC7gCAbBOAQz8P0GctkMOAd834fWERzHgXQ4eCQglQP4HFw76C73YfnAFbhi2TosnrOcdbKeBJB3IHSscScZdFNhm9xWsSla35p/122uTavmneqz7fNLXw2LEPEAGhEADgkODgkGjlqjjur4BN55Z5/J5/OYPXMW6++fDiEEoihKXQGyVr+qcNrB1XmC++sK53mazPxyQjmZsaGF4+CIwBDjj0xqaBVAaYAJF1wWoQ2DUgCPACfSgMeBKAQyDM2gAeMxNNHEPz72I/OTp/8HKqYC7WkgBwQyhJIRuMfAtAaCCAyAEAyO44AxAwMFqAiMA1LGCABjDMwYkBMpuQPOAUcYmDACNAM3LqT2UM51Y9GcpVh42VJcvmjNf+t0+/8kixI4XGgNSJaBQ9mhMIoz/0aCMWuhNEDrrrkG5xpcMhgoREoBzEAwAWEcIOJQlL8XHFwi2dwazaAB6UpIcBjE88aYAGcCEQtRxzkYBODgaCLA2dND5sC7h7F/zwGcOnEGV1x+BdZfdc2WpQuX3MTA0Ww0IISA4zixSWfiowvC/yaEk3wvln6NWT9gIaADMMkhuANAwg8Z/IBDComcOwkZhX4NIiMR8ghKahgwHK0c/e8vvvbiv3xl9yt45+i7UNKHySIG3qWGdEhbJJEoNJTyYaDguhKe50KFfqJFWSyY2kCAQQgHQhpo0wCgITgH1xIqNDABkHeKKGa7MKt7Di6btRhL5i7HjL55/74se/6TixwYGEIVoSAyEOAABJRi0IqRjIEn6660gdYRwE0a+XMePztUvKE1DAzTUEYjMhGUCRGZCFnPSXRoiEhHEFzAgQcNjboex3B0+r+9c2jv/3ro4GGcOnYK+98+iJHhCtavuRZ33/E5rFq+ink8Bw4GpSIwwyGkBAwQBD6EdD+ZwjmloBoOzXSSRdEQYJBcQqkIoe/DkR48N56cykQVUkp4ngPOBQwz0DBohk1oYcAT2Oidob3mhVefxUtvbsWJkaNwO1zIHEe1VkMmV0Kj0UCkAnhZF7mcB8GBpl9F2Gwgn8sidiQMmFHg2kAwHgdGksPXTYAbcMYgmYRgHNIIcBVDRGE1RN4roZzpQKnQiRl9s7FgYDHmz5mPzuy0+4LI/UdXFpFFLnZpIGNoDALxdo1xWWUUOJNgcJC6rgxgWoFxBQYGDQ2TvDUMDDRChIlo1jFRP/dX4xND3zw7dAJHjh7A8ZMnsP+9Yxgbr2PozDC4lrjyinW4+84vYP2V17C8KEJAQhuDyA/BIeBI2ZIt0h8gIfVDF06b06NjHBuKcxIHCA74TQMOhnwGMIgQ1CfguoAjXQQQiBCnGaNIQTAJV0j4fggmGUIWgHODED7ePrvLPPnSE9ix5xcYa4wiEgZacsARkFKAcQWlA+gwABcariPgijhQ4jBx8GUMBIs3jHAEIs6guIFWIUyk4AiOrOdBGAajFBxICCPAFWAiBskdZL0scl4OghWwfMk1yGd7UC53olzsQDab+07WzR5wpXNGQn5XIiabcEi4yAJwAAiEMFAmRIYZ+JhAPaz9eSNoLvDD5r9sBj6q9TqagY+jxwcxMTGG0bFhVKrnUKuPYHT8JIaHBjE6UkPBnQPlSywcWIzP3vk5XH/Np1jJ7QDAISCBiIEbBld66RoHicw4jvPRFs6U4X2hOhV28b9NhTPJmmgGKCZhjEhA4kRDJCC2JwJw1NBQw18YHj/34zf27YOX78BVK9exIsqAAjIih6hh4MqYxxkYH3A1FEJMYBz7Tuw123a8hNf2vorjE4NQQsNxBVxXghPDiGlwDnDOwLgBM3HQBG0gmIEQDpgQqEcG3HUgGKCVD8kA15Fg0FCBD8+VEBowKh4MbR4hBLiR8Jsx0VlKFxnXQyFbQCGfRT6ThesIFPMFcANI7iHr5sDhQYWA39QIQx8hr6IRVFCpV9AMagjDEPVmA+OVBmp1H9lMGfVaA7VaDROVUQyfO4VqLUSpBEzrnI653atxw/rbseGaDf9fT0ffH0m4cJEBA0ekNDzhgSFxaTCZf2/Pg3/ihLMtVxHjf+DQ4IBxEgYRIGTMsVBoQKCBEOfufn3vC//jhW3P491jg/DyZdxyw624ZtX1/7U/O/1/y6EIriSYissvIGMVXYtqUDICA0MNFRw4/a7Z+tazOHhyH44ePYpqYwJu1oXjCQQqgB/VUSzmwQSD4XGgFC9Gks7jEkEEOI4LxgDoAJyZuBZJMMCEUFEAyTgkF5CMQyQRro4UlFLgwkn+Hy+0YDFSwE3MbDJKwygFoTkE9yCMiyhk0AEQGQ2R14h0gEBFIDkJwhDNZoBmM0C1UsfEhI8oAPI5Fx0dHejq6sGcmbMwp28BPn3dlzC7Zz4r8AIAjsBEEHDhstiXNFEslIYQjSQYslObHzvhfD9CSZF6bN41uJksa0jBaclQDxswXgDFGth/6k3z4utPYd/hXaiHFcCVGB2tIMsKWD5/FW5cdzNWLbiKFdEFDhfCZFEbryNUGvliAcIBAhPnhyM00MAwDlf2md3vvo0977yNIyeOYLQ6AiU1RCYJnhwNOIhTjzyCZgZMAC4XyHIPXBsoFUKFEZQOIRggJIuFUgoYFRMrYpdAxMGMcCEkQ8OvgEkBIZyYVWUYTII5Qmt4jgMdKSDUMIYBIUMUGhgV05qbJkBoNMKAo9mI0KwH8H0fSjfBTAApNDrKRXSVO+E6RWRED+bMWoZrr7oFaxdcwzJwISHAEjAp1pIcTDMwJuKNYsE9WsegvGFJLp7xT75wCgMw6BSwjrMoBr6uQ2Y4zoYn//ylHc/939v3bMWpieNoooJmVINSIfp7+lEfa6IyEmBg+iJcuWwdVi+5FstnXsEYMnCQBYcDZoCgCXAeR8O+VmBeEwpNhIgwrsa/eej4wb96a99bePvg2zg1cgK1cBzG1YDHYGQExRU0j8AcBgcMIgwhQOA1iyuKtY7hKMpdG8RmnHMIiATwZmBMgYsYn4VxEUUKOgSMjtEAKSVUFMTCqTS0BqIgQtgMoSMDxTgqjUbCfJKI/Bjv9RyJjlIBpXwGpUIWTAGeKGLOzEW4atVGrFx4HcujBwocOXAAClrFGC9jkwhALJQcURQlPmac7Y4iBcM0pJQw6mOgOVsAdUtQKasQqijNPrT7KkbpOAJ2nDgMVT408wEZwMfELW/s2/70S7tewMGT+zAWjcEXPiKhoBHCYQCUBmcuuHEQ1QFpcpg7YyEWzVmODetuwrTiZayITkh4iJoGDhKzCyBUAHNiuE4lcW0DVRwbOrx5cPjop0+fG8S+o+/gwOC7qDRHYTwNJjSYNHBcDrAIHJMpPG2B4Cmh10yCzApxNkYrgGsFgQCCcUQhR6MeIVIcUuRgwGMNZQw4M0nuWyEKQgRBEAuQcFBvBvA8B9kcRyHLkc8LFLMZZEUBUmcRTAgsmL0CVyzbgCUDK/9zd2n6v3ORSRMbItUi3CrGs7+ylLRiUQKmLOb72AlnGIaxjyJ4CxUrzeuCQXABGINKrQopOdwsh48KzowfNpuffxj7B3fhxOgRsDzAsxz1qInQAJmMCxMG0EqBQUBKF1EINOoRhHaQcUroKUzHVcvWY8PqjZhXXsgkPDjwYAIg8gE36wAKaASAMgpOhkO4DAohFAJMmBFM1Ef/6uzYyW+eGBrEwaP7cHTwMEYro4jQQCDq0CyYJEtIBiFi1g4XseZUxkAbNUlKSVg9Egy67kOHCgwewD34vkG1HiBUsWbiHPCjOqKwCSACFzHjKoZzOOKsDZDNADmXgSMEQsBROWR5L+7+Z/8c3fm5mNa5gBVlF1iMjgIq1u6xX8/bMk72un6ChdOwOMtijIHv+4gsbqBRCg6PMTPNAOZIRDA4XT+BF15/2rz0+jMIxQgCPo6QV2NtmmBrWgM6nCQfGAYI14GQEpHRCIIQJhSQxoUbZdCbj1OLVy+/GsvmXX5fmXf+o0AGUeiCMweMxZWWxgCMx6RhZSIYbsA5g2ERQhOiXq9hojr+95Xq+O+PR8N47eBLqERjqFYnUKtV0PDr8IMmgsiHUj4cV8R8TqOgTQClFJSJgyGjDDyTgwoMQhXDZ5FiiLSBm3GRK2XgZTg0a4LzAEKquFRZGDiugOc4gGnGQVMkoXzANCV6ijOxbuV1WLtyA3rdWZ91kX/UQQGABxMK6FBAaBETsJ0p6rAuEtgSYUUnMODHWjjBJ6M6lTBepJRJ5iOEZEDVr8PN5BDC4JV9r5nvPvT3eG3PNhivjo5+D90zsiiWHQR+DVHDj8FuCISBhutmAMZgmIavA4RQYILDsBifa9QCZHkGBV6Aa7LIIYvpXTOwctEqLF2wAnP6F7MMKyXBQGKalQE3cUDgiDhqVWEEYxikk5BxtcZYMAKRjTCG0W9WK2N/NVZJhLRZQaNRga+aqNXGEagmGo0aGn4VkQpjDcg5OJdwZA5etgjXy8R6jDNIV0KzCIGqI1RV+MEEGv4Imv4EAr8e47Ccw3UEeAiMDo9D+S7mz16OdVdsxPKFV6EvM+tzGeQf0TCQxoXQEsw4sTRqNwk2qWzkVxNOihU+tsKpkXAErZqUSCc+mojrw0NoHJ04+Vc//PED33z8+acx3ByG8iI09Di4F6JQFOjvLaGnswiPcZhmE4gAz3EQRBGk6wCcwVcBAhVAc0BBwRiGfCaLqBmBRQySuUDIwZSByxzknSLmz1mM6T2zsWDeAsyeeRk6s11fd5G734UHCQ+h1sjwHDgkojCCVhyulBAiKV9PWjUZE/urcW5ewyCERoTQNBKILESI4Cth2JjjB43/y/ebaJomvI4sAqZQqU1gaGQIYxOjqNRHMVo5i4nKEGqNESjdALQfM6WMgQpChKECAhcy6MDiuatwxeVXYeCyy9GTm8WyKEPAgdIGLhfJGhGRNCmu00nNPZd2q6lJf9lcSDjxyRFO6jCgEx9Tw6RM6gga51DBz7Y+YX72xKN49+hBVFUdPgsAz8DNO/CDKriIUHAlOopZ9BQyKGRdOMbA6ACRjuKcMgwM4qiYSQENg0iZhDQcwWiql0kKuAzgMgeqrpGVORRzRXSUutBb7seM3pmY2T8HvZ3TUcwUUS70/NuSV/pLBx7VeSb/JExcSgcGAwaTPEVc4AYoVNUEGNcwLPpSGDVnVJsT/2V8fBTj42OoBeM4XT2N4fGzGBkfgR81EKo6mlENYCGkG0GpIC6N1wZRQ8GvK0jjolTsQU9+Fq5ddQcGZl7+vdldc7/B4EBDgisH3HAYBUiZyKXRMEalhBBjYoXBhWfV+f9ywvmxN+vKxI69SiJ0KePc8ER1AgeHj23/++ceunrb3tdw4MhBOJ5ApuihHjYQqpiaFgWxX2p0CBY10VGUmNHfgXLBAdBAseQiCBuIIg2tDBhz4mYJENAJRmcAKB5r8UCHUCaC5gbScEglYQINoxCLmZbgEMgIF670kM8Ukc/mUC53oLPcgWKxiEwmE49RacyeNgfMxNcOQx91v44gCBCqEAYKdb+KRrOO8coYJiZGUGvUEKkgDp5EBKMbCKM6DNNwshJCKoRRE0r54ILBRLE/yUIHUudRdGdg7qwlWLV0PRZedsW/73Zn/icP+RgpNgomSmAtyNSHbhEubhDDliaBupLMT5tQtpcrm/MgQv7RD4guhXkqo+F4LkKlEEQhuOdgZHQUP//5z80/PvsIXjm3F42cRgyhJRGk0TFYzVwICKhQg3EDzzHQug6t6iiVs+jtySHj+nC4geM4cIULpYAoUDDgkNKFH4bgkkELhsCEidk3YElFoWM4tB9nfhzhQjIeZ2uUhkAcuLFkTJzbY9MxUykCXCHBHZ4Ea7HWFEKAS57wUTUMj0kchhmrxDaAJwwcJ564yG9Caw0pBITmCP0QQrmQOofu4gwsmbcGyxetx8Cspb9fZP3fFchCwIOJiNEe47fGmDTqVkn6F9xqwMgMFFSc9Ejq/duj74+9cFKBGWF5DIhLdK3BaRjIjIeJRgVuNocAGt/70Q/N3333OzgdjqI+m6PuNtO/ZUpBGEAaDsFkzFBnAlowaCgoFvMamSvg8BBF0UTONchms8h5LhwpwBg1KogzLcpE0FojhEqB/xSDTLmTuoXEwhmLzZ1V/JX21ASgFcCMQoZLCJbk31lS+slNLBASCa47WSBm56a1CeC4gO/XwRVHVuYhlIuoZiBCF3lZwmV987Bk7gqsXLIWM3vnsgyKMexkBLTm4BCtKeALUmvOh4EuFQR92K9fu8DNsPaRx0LKTdITMymcYjwunWDMxZXrrsKhE4N4bueL2Fc7DE9KOFIiikIIFvMomTYIgpiXyAXAuACkjHPTgsFwhlADY40Gmo5BJohQywCuw+E5DFIAkuvJB2IAZwIwHNxyPaIoSpICdsOA2INk3EAbHaf0EAscCZfksTpiQgAsHh9YHNGrxKSbUCHDvEkBNzrGF42B1rGAhmBwWQmCS5imRNR00JXrx7Ill2PxZZfj8gWr/23Z6/rLLArgcGICshLgXCadPi9Vw6OBdn79R1QYf+uaM9IKkAJwOcKkkZUGw5na8J/8Ys9r/+9/f/BbOHLmCGpBE7mOEgJEODc+CngCPdP70fB9mKSLmwDAk0VmCR4Zk3ABKRikMJDcwJGAK+P/c8TmmItY+zFQg4B405go7hZC2o0lgisZT/HOWJMasCRTwxiLuZacwVexJpdCgLHY1Mcs/jizAxXFGR4qWyY4TbiQMoOoyWB8BkdkMK1rBpYOXI7l81di3rQF/7KErm8LeBBwY9JeGGtCwSQ4lykJ5ZP6+rV9TirOsrtLc2OZDs4RGgXhCgRaoR404Way4JAIEeDwuUMPb3728c//ZPOjeO/0MYiOAjLdJTRFiGpYh8g60EYBWkEYDWk0XMORkRLSdaC4hOIAjAIzEZiJwJmGy1msOQ1R33giQCxxFVhq4VjqSya15AJJvpyl7gF9FYylAmw4Q8QBzRkEM/GGMQrJFoDDYqPqMAHJOVgE6EiBmdgfdnkW3YVZmDV9AEvmL8WCyxZimjeTCTgQcNGIfDgsE9cgmVggOZepxg/DEBnX+51wXoouPOm3tDawchwHfhgg0jrBI+NWg8poeK4DBwxVXcNbB/eZn29/AU+/9iL2nz0G3zNwOjJgnoDhCpwpOMaAhxFYGOfUueMiEhKaC3BmEFemR/FnWSycWoUx5MEYBJvUnpzztIcRE0nLFcS+KmMGkiP+fFIywowGg4GAAeOxRlZcxyUhgsPhAoLHLHhmGKRxILRA1AghjQOpBASTKGZK6O3qx8xpM9HdMR3L569BX8cMVhKlWOiUATccGZlLKkJjLa/1pAulLG6CYOwj6zN+BKAkfp6PY2NiWms4CVjOOYcjBQwAP/ThOS5C3weTMWlzBDXseG+PefKV5/Dy7ldx7NxJhDxEiABcGGS9hJmuovgAAhlrTiM5OGdxia/RsYBCJQIb448cLBXQ2EzHQVZoNBiZfGYAo8ATDSkFSzmasUthYjocYzHYzoFQN8GSbA+HgFQCTAuIUEJoB57Io5QpobfUh+k9szCjbzZmz5yLOdNn/XGJd/8tgwsHHjg4jAEEkzFd0AC+H8DhIsZwTZw9MizGJ6XkYGAw2vxOOC8EHfE2fdkimElU6rkeYDR83wf0ZBF/HCgIcFcggoKPCIBAFT5ePfC62bpjG97a9xbOjJ3F8MQwIoSQroBwYo3MHYEwrg+OTTdi4TKIwLQCmIppYHyyq4UAS31OzTQCROCSNGpMWIyFM+kLaxQkkJYK80TQwXQKxTAd181zSHjwkHOLKLplZEURiwaWor9zJubNnI/Z/QMsz8rgELEwgsWs86T6OQw1TBSTQ6QQYA5iqlQCBVE2yo/igIsoeL8TzosIp92U1S73JfgkiiI4Iiau6kjBceN8dbPRgJPJIlAaGgpMMmimESKCRhwlH60c/7sde9/8g207XsH+owdxrjoGX/mImIKRJi7xFSaO6CcbJYGxOBtCjaekFOdBOZHRAFcQkiVdQ2JgkMEkrPW4RSEHgzQsDWxg4kCJKwEPGTiIAfuOQhnT++dgwWULMH/2IvR29/9VrzP9Tx1kIGL2JwwkYAw4krJe6/SXtMlGMgytkTCbEhaSjMvdIh0XrXHOwYzEJ/X1gQun7ZkmSg48pWEBAZdQLGbCM0Oxf9wUVnETfwVQRQNHh0+a3Qf2Yue+vTg8eAQj9XMYqQ1BMR+GmbT2nOq7VVLjLSQHlxLCkfHPlQLjHK6QMGETTpJO5ZisTafoWiRnujClYVQstKVCEd3d3ejK96DbnYYZPXMwb948zJw28z8Xs6V/5yTscgknSfPFCU+7qS0zMY4aq0dmgd9t82Y1VqIjbKgRWPyf3wnnJc16mj9n55MDSDDp8zxZDM04ApEEJdAxGz4V0HgxpOOgoX00dQQtBTQkavBxtjr0t0MTZ//wjbe3Y7w6jKFzwzh7bggTExOoN2tohk2EWsHNulAmzr1zKcAst0MywFURZJx8Tsy0gOAOso4LR7jo7epGPpdDV7ETneVO9HR2oaurBz1d3ShnOh7szc75ssezcJKEgUmAfyCGo6gJA7dbHSYd5gwSzBaTv2tv1936c53WrVN2+8NuZfMRF87Wg6iog++UaU1q+ccI1o5z3i3Xa8/Vc4ZARbFweQKcSaiEWuGjDg8MARoYa0z8H6PjY7ePVyvXTlTHUWlW0QgDnDpzGo1mE34UgAkec0s5g9ZxUOVxA4cxeNKB67rIZXIoFEoo50rIuFl0FDuQcb1nCrnCa8Vc8S88noUDN95wEJAUzGjr0Ax69raxtJMrDNNQUkFbIsZMK3u+/fwke340w++E86IXOC8Hyy9BEOFJOVVbjH+BmqNImbgljABCZRCGIaKETOI4Iu4IwmPnjFDJCApN7SOIQgjXRTP0EYTN/90wpqWU/5UxBm0iMK2houD/FBxNV8i/dBwHDoujZ5GilUmSIdb34OBQOm4BqCMVt6UxSYsXztPuLErFb3GRbi2GaygZtgjnedrSsBYMebKc4nfC+T5eemrtcB7EZP2fsxZNSVrUPoqF1oKalCLF9Xic96YbNZLWNYYnrYIT9gOf/IwyGlpHaXbHmMnMDxiDsRyQ9FmiKA5IkNQ8qfj3Dk+EkCW+oIwrj6DilKRKSMqcx1vwYpWzhgEQCppFU/iZF8KRWzshG/aJlc3fXG79QnAGbxNfezINm8KMs1ZtyrSG0mGSWYkzTgYxXU1HCk6ukEhTbFdNpKGVTqly1IBLMjn5jMrEyVABhDqCTntOGjAWZ4+EccARN0+I64NialmSek/qwxiCwAfjOvE3AcrEM5akSY0VgTO0HCJLvaHEeUGNnkLo+P8UAvmbTV9a/c2ZmSR9tBzhl+TgSSMaztK2fELz805hsxfIqMn0Y3xDlZjROH3Y9EMwIePfcwobJrtRMEOFdIi7xSHuL0QwF3PcODlJteJIitC0SctL0t5ALP6MSRzKmNzsxJ3dkn3OEJ/uoSIDbSK40gE1jAAm2VLxW0LoXEKCbXVvWgrK2IUPcmW/y61fXDhtX6ldOCdFbWrhJLNuR6AtTBqW9Cg3sVmOa6tj7C8mlTipS5C2SGFIM0IOE1BawWgNyXhMxqBnZQyRMukhhTEOmjyJjlLBTE+TYCah4MXCbhiPm9YmIDwlFkTCaJokZuj0jKJUOJkBjIAwufjALdYe6MQPOZVB0pbF+SQLJ7eb07e/Y8depfXm1NWWFiwMw/RQKmpiSu1kSDcoY2AYSwIFPZkeNBrMKGgVwnFizmMY+nAcASk5ms16nCJMymAFj0FspYFIa2jDwJmM4R9tAD+EBw5HAyxUyDABFkQIm004LD4zXSZ93xkEImXQ9OOyZRUGMCqC5Czu2hFGcIQLz8nEpQ7cgY4MdKQhmYRkAkYZNGtNSBZT1yQHPEfExA+WZJG0gY4MJHdiQeQZaCMhRB5R5ECIbFw2zA00M/CjAJFRMMwgUnE9EmcmTqMaBRUFce4/mTcGjSiK0tqsIAhSP50xlv4uDMM0GUEUQfrMJLJgpnxTW+1JX7217TY1XCBqZBiGaZtu6pBMXZCJM2t3EKHvtdYIwxDNZhO1Wg2VSgWs2Wy23GxSY7H0jxiLwe0gCCClRBRFcN24qT9NyAXDpWRSqLVz+wMZo9KB0cBTWtr76JwrpUSz2YRSCrlcLt00tABhGCKTycQbiTHU63XkcrlJNCCK0rN0wjAE5xxBEKSLm8/n0+tFUZS2n57Mfun076jrLy18GIZwk2xYEAQt47KfMS5fkVZKl6UHVYVhiGw2e8FeVKQsbAHxfT+uznTdGFVIyrFJWGjD24JtH4Blf0/CR+vgOE562gbNA7k/9nlFURTB9/30QIO04lYpNJtNMMbgeV4shJZ1ss9BYqOjoy1s75ZfJpkTEkqlFBzHQb1eTxdACHFJ4bTPtrEnUWsNz4uvJ6WE67qpdnYcJ23vfLGX7/vI5/PpRNKiKqVSoaPfSSnTkyHIItDmU0ohDEOUSqWWySarQpNLi9VsNpNaovhaJISkaWxtRuO1+63bp6PROG3tQs9kzzHd2z4sgDYe3ZMOr2KMwXXddC5tAbPHZG/+9o5x9Bl7s9AGpAOySNhN2uihVcCUUqjVanH5SXI/+ywjW9Zs+eOcg507d+68XWPvHs/z0gexc9PvG2iyHqT9KOVYlfup4HDO04n8ZV5KxSlJ0ook5KStm80mhBDI5XLnncIx1XXsM3bI3NDiO47TIlhCOC1amDEG3/fTa3iel46/2YxrhIIgQC6XS7u12QtG9/I8D2EYpsrBNtdpU4pES7qu22KNploj3/dTS0DPaq9Lu4DSVxoDnfJGJ2rYp3DYf0sHHZDQSilTy0Kf9zwPQoh0g1/o3sz3/fRm9jFz9nk0xhi4rouJiQkcOnTIGGOQzWbPNZvNbtIoF426GAuTmzqMsZBz3tBaZ6Mocrq6Op5dsmTJpnq9jtdff90UCoUhrXUuiqL8+zmtQUo51NHRsbm/v//rNPG0ENlsNp2QMAxx+PDhR0dHR+8UQtSiKMrTOTuzZs1i/f39cF0X4+PjKBaLqaBmMpmU2JvNxsdZnz59GvV6/XvDw8O/x5ioK6VyAJDJZA4vX758wDZ3zWYz3Xi2KWw2mzHX1feRzWZTTU7+YTabTYXT9/34kIRkoUlI0tomAPV6HUNDQzh9+rSJogiO44Raa6dcLm+ZPXv2TYVCIZ2zIAjS+bE1dbtZt4WdLIsQAtVqFcePH985PDx8RaFQqIdhmJNShl1dXT/u7e39Mq2DrRg8z0utLwm27epNKTe0K22fz/6epF5rjf3794//zd/8TWl0dBS5XC41o5cQzJadQYOnwX7uc3fh3nvvZYcOHXrzP/7H/7iKXAjSfO/XrBeLRSxatAjr1q3DunXrWDabxcTEBDjnKBQKGBoawre//W2zfft2uK6bmvhCoYCOjg6sXr0aX/jCF1hHR0d6Xc/zUK1W4TgOPM9DvV7HM888Y55++mkMDQ0hCAK4biy8SikMDAzgX//rf/2DgYGBr5Fwk1kk7SiEwMmTJ/G9733PnDlzBv/m3/ybn86bN+9u218jS0VakfpNGWNQr9fT54miCGfOnMH27dvNzp07cfLkSZw7dy79vNYauVwOS5YswerVq3H55Zf/YO7cuV8jzU/CNlVARD8jd2NsbAw7d+40L7/8Mg4cOIBarZYqMXJdenp6sGDBAqxcuRKrVq1ic+bMadkQduxCsYB9Clz7V0lmpN0pJSGyd2h3d3f5xIkT5uzZs+/7QM72I5Vth5kEMPEvu44fP456vZ6aQtqxF4WyjEGtVsPBgwexZ88ebNu2DZ/+9KfN1772NVYqlUABn+d5GBkZwbFjx5DNZpHNZhEEAU6dOoWJiQm8++67cBzH3HfffcxxnBZXgDbI888/b+6//34cOnQIURShs7MTYajSQMtxHHDOv0bWhp4/bX9onR+5ZcsWHD58GPfdd99dAwMDaSRNlogWbbIALxaETCYDKSUqlQp27dplHnroIbz55ps4c+YMSqUSOjs7US6XIaVEtVrFsWPHsHv3bjz66KNYs2bNV++6666v3njjjaxQKKDZbMLzvBahbEduPM/D5s2bzVNPPYV33nkHIyMjyGazKJVKUEqhq6sLSilUKhWcPHkSO3bswAsvvIC1a9eaK664Ahs3bkytUqPRiEu4k2Ca5qXdpJu0x0EyGVNpTXJYyaT19vYik8kgk8m0BBW/FLDaFnVOnz6dFqHbnqipTMyFhJN2brFYxIEDBzA+Po4lS5aY66+/ntk713EcFAqFVHMDSP3QkZERPPHEE9iwYcP3BgYGvl4sFlNBajQa0Frj+eefx65duzB37lw0Go30/mSWGWMtgVM2m00tCwmZ53mp31cul+H7fkskS8GTHeDYQg0AlUoFmzdvNn/zN3+D8fFx5PN5bNq0Cddeey0WLFiA/v5+ZozBqVOnzODgIHbu3InXX38d27dvx5EjR3Dw4EHz2c9+lg0MDGBsbOw8hITuxxjDD3/4Q/Pkk09i3759KBaLWLp0KVavXo1Vq1ahXC6jXC5vqdfrK8+ePdv9zjvv4I033sCBAwfw9NNPY9u2bTh48KD5yle+wubOnZv6yJ7ntRzMdaGATF7Kp6MTZemPb7zxRjz00EOpo2xDCblcDmfPnkVXV1fqFBOkQdehRl6VSgUDAwOYPXv2a/V6HUqpvG1q6fPGmDQijQkgIoVK7KhZKYVqtYqenh6MjY3hsccew/r169Pf0eQTdETOehRFyOVyMMbg0KFD2L59++8NDAx8nQIGxhiy2Sy2bt1qfvGLX6Cvry8dW6IpW+C09Kzw5NqWFmiZRzL3JJjkzrSf0Jv4jyl8BwD/8A//YB588EGcPXsWy5cvx5e+9CV86lOfYvl8viWynz59Olu/fj2uvPLKBzZt2nTfT37yE2zbtg0/+MEPEIah+aM/+iPW0dGRzmHspkwe3fKtb33LPPjggxgaGsLixYuxadMm3HTTTVuWLl16k+2T0lx8+tOfxrFjx/Diiy+aZ555Brt27cIjjzyCo0ePmr/4i79g8+bNS8dko0AXUlyXjGYymQwajQbCMESxWMRdd93Fli9fbjjnqNfrqfDVajXs378fjz76KOwga+HChbj55psxY8aMFowLAObMmbO3r69vHWkSOxij3fyHf/iHKbxDWJ1t/pRS+OlPf4r9+/dDSolGo4FMJoPBwUGMj4+jt7f3PA1smw7y78gS/OIXv8CNN96Irq6udKF838cLL7yQBiP5fD4NKtqtQjtEYjv89D35ozZGSb+nNwkYjYmE7uc//7l5+OGHcebMGaxbtw7f/OY3JxYsWFAuFougbB9dm3OOZrOJBQsWfHlgYODLc+bMeWjWrFlf/Lu/+zs8/vjj6OnpMV/96lcZ+X60saIowtNPP22efPJJDA8PY/Xq1fj93/993HzzzcyOym3YJ4oiNJtNzJo1C1/5ylfYFVdcsXPz5s1XPPTQQ7RRHzLG3GMrQ9d1LxoQXVI4m81muohSSlx22WWYNWsWIx+CQGmlFDZv3mweffTRFHzWWiOfz2PDhg1s7ty5k516kwArBomDljMU2yGR66+//v6enp6vkx9Hk0+RX+L7mr/+679OBTuKIlQqFRw9erRaKBQK9PwkXPYuLZVKKfTDOcdrr72GHTt2mDvuuINRYPHuu+8e3LJlS7pBfN8HCYMt+BTkhWGI9rSw7QbZQLjv+wiCIP08aSL6PEX0+XweQ0NDePzxx3HgwAGsX78ef/Inf1Jfs2ZNOc3WJVqe5sB13dTnDsMQCxcuvOf3fu/3cObMGfPkk0/i0Ucfxfr1659bunTpTTQ2ADhz5gx++tOfYs+ePVixYgX+xb/4F7juuusYPTNZjlwuh4mJCRSLxRSnpvuuWLFiVW9vL+bMmWNmzZqFBQsW3GOfRExze9H05fvxEzOZTIp3EtRBF7fP4razDhRxk8al1BZBIowxVCqVFjzNPq2WdnIul/t6qVRCsVhEsVhELpdDPp9HPp9PMc1Fixa9KKVErVYDQSZJMLNrqtSsranWrFmDfD6fAunVahVbtmxBrVZL388+++z8c+fOwXGcNApeunRpOq62dN8DBKzbALWdJrb9adrcFCh4nhe31rHG2dXVhWw2i927d5s33ngDM2bMwGc/+1lcddVV+TAMU/fBDqbovplMpgVfnTZtGu69917MmTMHg4ODeOGFFzbS5iRX5LXXXjO7d+9Gf38/vvSlL2Hjxo2MYDbym8nVKJVKaRaK8NZms4koitDf3497772XbdiwgZFQ2xk0OyU61fuSwkkQBvmANt5GEWWj0WjJXhAATRE5CSOZDNLGBIdMndacjHZpA9DPbMCec4733nvvBtJoNhwxffr062iRs9ls+nlby11xxRXYsGEDaJHz+TzeeOMNvPnmm6ZQKGBwcPCZ7du3pylE3/exdOlSXH311ammsLE7x3G+nMlkUsGiTZTJZOC6bguAbqf8SDhIUOlN1/V9Hy+++CLOnj2LlStXYv369Yw2oZQy7R4dBEFLAoHWkDBazjnWrl3LNmzYgGazie3bt+PcuXPpeo+Pj+PZZ5/FyMgIVq5ciVtvvZURotPR0QFjTBp1kyWk1C7JACEKQRCk42w0Gimc9H6PibmkWSdTaAtYu6CQb2Tf1BiTCoNNDrChpVit65YTaO1ARAiBffv2maGhoWNa66wxxuGcN4wxUggxEUVR95kzZzqefvppVCoVZDIZ1Ot1uK6LjRs3pmnNdmfbfgbXdXHbbbeNbdmypWN0dBSlUgljY2N48cUXccMNN2DHjh03Hz9+HEKINEK/7bbbMH36dNTr9ZbU21Q+p60l29Nzdnq0XcPTJqUA7tSpU3j33XeRyWRw+eWXY+bMmak2pg1O7gD5ypRmFEKgUqmknAIpJa6//noKVnDy5MnxGTNmlAFgbGzs+3SflStXoqurC81mM3XVKJ4geK7ZbKaKwt4ctLnINaG2kTRO2+L+ysJJpoe0HPmeNLl25GxHsZRLpUyH7VPSIOOJayUt0Pc08f/hP/wH5HK5OaQVhRAdSZqwlxYjDEPUajXk83k4joM1a9bgK1/5CnNdtyWXbme96PkbjQYWL17cuX79evPEE0+k5n3Pnj3Yt2/fE6+++mrqjoRhiMsvvxwbNmxgBw8eNDT21nN6dKpJ2n3OdpNu48j25iYTbefsh4aGarVaDV1dXZg9e3a6wPQ5upZt5Sg75boustlsusG01ujt7d3R399/5dDQEE6cOFG68sorwRjDmTNnvlqv19HR0YElS5akmyOKItTrdZRKpTRIpPUld49cknYXhjYKzaGt7S+GY/P3I5z2YG3hjM8f1y25ZhI+8j/JfNJi2IJKWredFGKTDUjwqtVqahrIl1VKodFowBiTwlddXV248cYbE4A8TP1YCnjao2MhBLLZLG644QbkcrkUDx0aGsIjjzxy25EjR9Kcuuu6uOqqq9Df349arZZObrvg23ghLYLtT9uBG43fvo69uKSJTp8+nSMkoqenZ4I2vw3Y0wYnoS0Wi2msQFG/4ziUUVvb1dUFrTXGx8fTOTl16lTqP/b09Owg1peUEoVCIXXnaK1p/klLErJjB7XEULKZZKRULuZzXlJz0gKS9qD0k828sQFocnxtUN+mg9mkC3uCaRPYqUtbwGmH0b0JLQCQ7l7OOcbHx/Hd734XR44cMX/8x3/M6J60kcg3s/dnrdbATTdtYj/72WPm1VdfBcAxPl7Biy++lJgtiUbDR09PLzZtunUrwKGUgeN4YKxx0WSBbaLtPLbN+rJxUIqabYGjcRMeKaU8ZwswXcNGA4IggOd5LZG/zQ+gtbSjZ4rureC2yyZ42K4D+c7ZbGza/+Ef/tHs27cPnPPUvSKBLZVKOHnyJDZt2oTbb7+d+X4jDdaUMucB8Gmw+FFnQ69cuTLN49u+IjncjuNgfHwce/fuRblcjg8gnZjAww8/jN7eXnPPPfewdppeu99MEef69evx2muvpcSLiYmJdBLr9Tpuv/12LFiw4AbyVWlz/FqVBO8jCSKlRE9PD7q7uzExMYFKpTKPFEE7VkqWhzBlmyhOJrdaraJerz8wNDQErTXK5XJ6jZkzZ6ZKoVKpzCOhbSe/kLvEWDwXW7ZswZYtWzB9+vSW1DRlyarVKvr6+rBp06YWOl188C47L1DSWn/0hfPP/uzP9vX19S2xMws2Vpr4SWf/9m//tnfv3r0wxiCfz2N0dBQ7d+7EXXfdldLc2pndlAokYb/jjjvY1q1bza5du5DNZjE2NgbOeerPXnvttadpociX+022LZ+KT2kJzYOe5903NjaGw4cPY8OGDanJt5nqFC1TsoKsjk2tK5VK2Ldv311DQ0PIZrOYPXt2nTDHWbNmPeg4zn0jIyM4dOgQrr/++lSzSinTxAvBaL4fuxq33HILZs+eneLApVIJnHOMjY1h27Zt6RySD02pTMfxzstG0tePvHB2dHQsmTZtWkt+3C4601pj5syZfRs3bjS7du1Kc+We52FwcBDNZrMlardNh9YapVIp9Y1KpRKuvPJKbN26NXVTstks6vU6rrvuOsyfP386+UyNRuOSef9fRigvlGMmt6e/v//LHR0d9ymlsHv3blQqFRQKhXST2ix4Oy1IWpT8RUJDXn755VwYhpg/fz5mzpyZp6Clu7v7y/Pnz7/vxRdfxJtvvonPfe5zKd2NAi7yKWNfNBbGO++8k332s59tcUWMMXj11VfNnj170Gw2MXfu3BbI0a52IP/b3mwf+Yr8KIq+Z9eztL8pA1IqlVIfanR0NNWg5MDbwYodFdPvaYFvvfVWtnbt2tSnPnPmDPL5PDZu3IhyuQybxXWpEpVfhgzTXh7RLrjFYhHXXnstisUi3nzzTbzxxhvG9hdtCMc29+T3keaTUuKdd955ZcuWLVBKYe3atejs7Ex9ynK5jJtvvhmlUglvvPEGnnvuOUP+abVaheu6yGQyqNVqqUUi9hahAp7npd8fPnwYR44cQaFQwOLFix+jhAEx9YMgSMH5tF4sCUA/8sKZz+e/TgtHO5h2sZQyFcDBwUEAQKPRQC6XgxAiZe+3c0lt+h5pYxKI2bNn48Ybb4TjOBgZGUF/fz+uueYaLF++nNk1MMRu+k0I5oX+T+gG/ezWW29lixYtwuDgIH70ox+BkAQKfAgmojHahBGC4kZHR/Gzn/1s/cGDB9HX14cbb7zxHBFhyGe95ppr2MqVK3Hy5En80z/9E958881hCjzJLSJOrK3dKbJvNBrgnGP//v2PPvnkk2g2m1i7di0WLVr0mUwmk26YIAhSBIb+3vO8NAP1kTfr27ZtM4St2aRdmnia8JdffjmtxymVShgeHsbw8HDKhm9PW9pEkvYq0y9+8Yts3rx5plarwXVdzJ8//wf9/f0tOfJ2HO83IaAkVO3gPeGml112Ge6++26cO3cOr776Kr773e+ab3zjG2zu3LkpnkxRPwVSVBJSKBRw4sQJPPTQQ+ahhx5CPp/H5z//eSxfvrzHzlYZYzBjxgx87nOfw5kzZ/D666/j29/+dvcf/MEfmDVr1jASIiL+5HIZjI+PQwiBQqGQBkCDg4P4wQ9+cOdbb72FBQsWYNOmTS0FbpPka5nOuw33vS8o6cN+fetb30oJAoSLEl2PyheCIMCZM2dQLBZTXyiXy2Hu3LlTkqJtvqRNFSOgOZvNYuPGjSnRgRa7Wq0in8+n0fulivt+WcGcisNKWoZA7C984Qvs8OHD5sc//jEeffRRVKtVc88992D16tXMrjGi5EAul8PY2BjOnDnz2D/90z/d8bOf/QzGGNxwww348pe/zCj3Tiaa5uIzn/kMO3jwoBkdHcXzzz+Per2Oe++911x//fWMeKhxxil2BchqZbNZvP3220fvv//+Oc8//zx6e3tx22234eabb2Z2jp80r+dlL1iKLH9Zs9O+yBQVkg9h+w2EtdFnwzBEPp9PiQFx4ZRqyaLYPM3Ozk5MTExcsjTYBtdLpRIGBwexYMEC3HbbbS2Vh0qpFg1DZoV8HxJ6qpMhKp8Ni5ADb2eniNlkF5f5vo9CodBSxmAXhgVBQDxR7NmzxxANj56NmEZXXXXV4RUrVgzYaeJ/9a/+FctkMuaBBx7As88+i3379uHqq6821157LQYGBhhZFWMMDh8+bHbt2oWXX34Z7777LkqlEj7/+c/jC1/4wk8JQiPsl4IlClq++c1vMqWU2bp1K1599VUcP34c27ZtM6tXr8b8+fNPT58+fbpSMdQ0Njb26JkzZ+7cv38/HnvsMezZswd9fX245557cN999zGqcyIclFhr7ec/2fL2a2tOwsFs1gkJjeu6OHfuXJrwpwm3WUtSTrq9jUYDY2NjKBaL4JynNc0Xe01MTKBcLiOfz6Ner6PRaGDBggW46667cP311zMCrknDViqVFgaOnXIlP4jGQxuKNBLBMaTRKEtE47YZ9iQgthtCmpZSf8PDw3jwwQeRy+VaitdIWJImA/OWLVuW1hKRv/uNb3yDzZs3zzzwwAM4fvw4fvSjH+Hpp5/G7NmzTbFYRBiGaDQaOHPmDIaGhqCUwtKlS3HXXXfhjjvuYN3d3e/LLfnTP/1Ttnz5cvPII4/grbfewuOPP44tW7agu7t7WkdHhxGCIZ/Po1Kp4MyZM5iYmEAYhli7di02btyITZs2/X2pVEoZTYVCoa2A8tcgfryfl80I6uvrS2EBIQTmzJmTLopdJ0OLStEylWxQKQUxWS4lnD09PamJveyyy7By5UrcdNNNYytWrOgkrU6as6OjA729vamG830fPT09Lexzu6TV9kPJ5NTr9RRHnDZtGoaGhsA5R0dHBzo7O9FsNh/TWt9p1w3ZxGbK/qxfvx4jIyMtmTQbIqP7LVy4MLVI9ExULXDzzTezefPmvbJjx47127Ztw6FDh9LA0GaHJWx4rF27dmLJkiVlqjSgYPBSrLRbb72VLVu2DK+//rrZvn07Dhw4gEqlkqQuVbpWREpZs2YNrrzySixevJgR2YQxlvI+CRu+lFuUdvz4dTQnFaSdPn0a77zzjiF+ZMJcqS9dujRvR3p2QON5Tlp4v3PnTmNrKpv4cBGoCVJK9PX1PdbZ2fkZiuBJ09hwzNtvvz1aq9U67O4c06bN+PHChQvvsbt8UCaFnsXmIJIrMzQ0hL179xobuvE8DytXrmRUlkILQM9oZ1tOnTqVwjKkYdt71pMrYfuRJHCNRiPFb8MwxPj4OIaGhp47ceLERhL6bDaLGTNmTPT395e7urpSDJiUQj6fv2T1LAVU9BobG8Pw8PADp0+fvm9kZASnT59EqVTCtGnT0Nvb+1q5XF5XLBZTs01oAdEFyX+mTcuY+OCE0yYck59J7G3OeVrdZ7PNybeh1oLkXJMGs32391N6TJ+h1Jrt55E/SYwYm4MZP7PTQoqwc9v0PBR42RxG2jTUrYT8T2qGYG8A+jwJu806tzVmeyWiTZRprzwgoJ3GZmshGrtdn0P0Pjv9SHNxKZ+ewHubjjfJkZh0ZaIoQq1WA2OsJRtkWwxb4cRjcD844STnnnaqTXK1SRztpcFktjzPOa8kloIGCg4u5VLQPWlRyFUoFAop5ka56MkdSySUVv4p7Wybj2pXRdJYyS+00QCafHvBSYvSdUjLEhxFPEe75sje7MQQsml4FGxRJSMJjx1U0LMTHGbXz1PwRr71pYg/dqBCG3uyfZCParWaFjjSNWk9KAC2KYGkUOIxf4Cas73/jV0fQiaEJoeCBnuhjFFox9mIvEr+38VejUajpfaawHm7gMyufCTBm2TaTJIl7F5C7Qym9p4+9kLZ0JT9e7uDCv2M8DxaJNKy7Vq0HQ2h53EcB5VKpaUrSbuWtDcYAez2xiHBej+WidaNNCf5qJMVDaqFHmgLIFnSMAxT14Ceheqiokh/cMJpl93avhKZIeqzY1PlaHAxZSpMfRPy9UgD2o2tLuZW2OaSImFyLewo3G74RZMXhpPPRM9L1yTfmHzX9mZeJNB2EwX7/7aAkUYnCKlWq6FYLKYaxOZI2pWlUsoUkSANRItO123fxDaZmhAAIn2QG0BalaC+i/n0VGdu1yvRnGYybmo97PW1Sd2keCjlSRzTeG3Mr042JsyNNKCdTrNTgiQotqm3TaLNNrE/I6UL3w+RyeQQhgrNZvyzWKNJGMPgOF7cb12ZRJgchKECwNFsBiB+pe+HcN2481uj4SObjXemMQyFQglRpOH7ITiXCEOVdusgv45IJfa4aWJJIOyWKucdupVoOHth7EpLouLZ4D917aPP29CULRx2QeFUGtvePC1FYhb5mzYf9ZKy2xPaTc9sTJWswblz59IxEjwXc0tdcC6T9uQMSlGQwyFEcgR3sj5SunAcD8YwRJG+qEl/X8Lp+366I+xJp0WiaFMIgaQ5QkuVHWkkqve2a4SUUmnjLMqxuq7bsghUEWkXaVFxHE0qRYO0Oei+tVot3dVUVEcCY0eQdiUkCUK9Xm8hjZD/SItoPyNpS5uES9qFQH8C+Y0xqFQqKeBPfafIFSFIxqbm2f4ubXYSLFtIaWPRuCiAouA0l8uhUqkgm822MKsoKeK6bmp+bbYQwWeU4aFuKPl8Hp7nYWJioqXJBml88kXbS7+p5dCliDPv26zbZRa022nC+vr6UKlU0miXYATSAiTI1FCBSByEd9H3tn+Tz+cxMTGBfD6ParWakjnau+CR6W8ndpB/VKlUUpNm+7pCCNRqtVSgaBGJs0jsGrusxPb/yNxPVfjXXrCWzWbh+37anMuuOiUhrNVqaYWona2hjUWbiXLT7ZuYLBelbkmQiTRdKpXSDA1dn/xWGxK0GzgQdk1uTalUApVg23Vktk9quzr0fNRJj1ADwokJwfmVhdOm/5OQ2iwWUvlCCHR0dKTscOq/SFEltZSh6+VyudRXJN+HoleaTNLA9FlKh9JE2v6f3Q2E/DGCjuzGrpQhooWxG67aUBJpXsJw7W57pK2nalk+ZRouYevYxWAkONVqFaVSqUUg6G/swIIW1t5MIyMj6OrqavGh7W4rtCk8z8PZs2fR19eXCiJluMgC0VpQsGLXNZXL5bReiNa/PR1pX5eCYrKqNH6i2lGqtr157S9t1m3TR6ZnfHw8BX4Jquno6MCpU6fAOU8XgQKQIAgwPj6eajDHcVJTTyWrVIxPmvT06dMtMBEJmt2IdHR0NE3TTUxMpAtDjVmPHz/+1He+8x2zefNmc+LECQghUC6X010cRRHGxsZQqVTSiSb3wq5zskt5aRPV6/Xzqgzb2TWk6UlQjx8/3lLLQ9WMvu9jYmKiJdiwBaVarWJ8fLzF4hhj0NHRgVqt1hI9U7BD+C41r+jr60vnioTPLk0OgiC9FmnjQqGAzs7O83xcEkTCpsfHxzE6OppuYhJMmkfCNKkDDLkRl2qqcMn0Zb1eT/OhR44cwZNPPmmGhoZw7733/nTRokV31+t1dHZ24jvf+Y5pNpsol8u4/vrr2YwZM9KJKZfLOHr0KJ5//nlz++23MwooSL2/8MILZteuXchkMujt7cVdd93F+vv7U//2rbfeOpTL5d5atGjR3WRSDx8+jG3btpndu3dj5syZuPrqq8N169a5YRhiZGQEnZ2dmDFjxj8Lw9AUCgXMmDEj1Yb5fB4jIyPYv3+/eeqpp9Dd3Y2enh7ceuutjJhNdjmw3YBLa4333nvvlcOHD69fuHDh4wsWLLjTDhBpI1HwxxjD2bNn8fDDDxvXdbFs2TKsW7eOkQ++e/fuQ7t27ZoHAFdeeeWORYsWraXrnTt3Dj/5yU8MLfiSJUtw5513MrJCSTPfYNGiRe7ExARGRkYOLVu2bIBcjd27dx966qmn5nV3d2PBggVYt24dI1+PrNQzzzxj5syZ8/icOXPurNfrqUI6ceLE91999dWvbtiwgYVhiK1bt5oNGzawcrmcbuRXX33VvPzyy8jlciiXy7juuuvYwMBAS2KmVqvhiSeeMLfccguzG3PYDKRfS3MSW/myyy7DqlWrMH/+fMyaNetucrhJA37qU5/afvjwYezYscPY/iEA7N271zzyyCN4991391BkTKa3Wq3i6quvxm233caGh4exdetWQ4VYWmscPnx43sjIyF02oeLFF180tVoNf/7nf86uueaaCWOMU61W03KLpLbooSNHjuDUqVPngfZHjhw59dJLL+GP//iP2S233PJ4s9nESy+9RF2BU5zWPo2CfLW33npr/eOPP47BwcE76Ge+76Ner6NWq6Fer6PZbKZg99jY2J5jx45h/vz5WLFiBSOihJQSg4OD86SUmD9/Pjo7O9eSLxmGITZv3my6urpw3333sfvuu4+Vy+W0jJf8z0OHDjm+72NkZOTQ0aNH5xFhhDGGEydOzEs6fBx++OGH02565KqcOnUKmzdvxjPPPHOH1hrd3d3IZrPIZDIYHh7+6iOPPILHH3/cnD179oH33nsv7QxCGvPJJ5/EXXfd9fjnP/95Nm/ePNTr9depmzNZup07d5qf/vSneO+99/YQLEZuya8tnLYDbTvAZDrJX/F9H/fff//6jo4OXH311YxMRblcxokTJ7B161Z0dXVh69aty9rLfuv1OmbMmMHmzZuHxYsXg0wwVV16nodcLreXzFnSpAuf+cxnWG9vL6688sryypUrGXXEo6Dm5Zdf/qJSCu+88w4OHjz4EEXpiTmfls1m0dnZicWLF9+5YMECjI2NpX4bmSR7EomwMjQ0hMOHD6f3qVQqGBsbw9jYGKrVaupn5XI5eJ6HFStWLP/Upz6FY8eOYXx8/PtBEKCnpydNuY6Pj2N8fBzNZvP7pLXJAtxwww2sXC5jcHDQnDp1Kl0LO9uU4JAhfU8BjOu62L59O7Zv3z7v5ptvTqsxfd/H+Pg4nnrqKVMoFPD2229jcHDwKTvbVygUtk+bNg0HDhzAM888cx+Nh+KGt99+OxgYGMCcOXPunDFjBq655hq2aNGitaR4EgHH1q1b0dnZieeee24ZYwxdXV2o1WrnVY1OKXvthxS0v+3GBHaQRJrEdnxJoPr6+tK0mVIKr732muns7MSmTZswOjqKXbt2HbKhm8Qn3Tc0NIQjR46gWCym/hLBP5VKZRml8YQQ6Orqwp49e0wYhjhy5AjOnTuXCmbi3z1y6NAh3H777SiVSnj99de/OFmUFU80Cdbw8DDee+89dHV1nUdqIQiKyg/efPPN4ZMnT+JrX/safvjDH+L+++83mUwmbWDQ1dWVtvImPHN0dBRLly59vFarYdeuXV+1qzYbjQZ6enqwePHiB3t7e79GeDClAt9++21D0NObb76JoaGhR2zgvF6v49ixY3vOnTu3iKxUoVBIA8VisYhz585h3rx5++3NVK1WMTg4iGXLlmHNmjV44YUXbqWgLRnvwq6uLtx2223HE0JPGtQqpTBt2jT37NmzOHv2LIwxOHjw4GOVSqUlAn/55ZcN5xy33HILRkdHsXv37p3tyM9FMfZLpQftXDAAlMvlp6dPn34raT7XdTE0NIS1a9eir6/v8N69e+edOHECl112WRo0jIyM4Lbbbtu1YsWKVUopc+LEiXmrVq1KMdSOjg68/PLLi3zfNz09PVi3bh1zXTeNrBMNc5q0V0dHB9asWYNXXnkFR48eNVEUYeHChVi/fj3LZDKoVCqoVCobVq1ahZtuuoktWrQIL774oqFKTGMMli5dyg4cOGC+//3vm+nTp1OLlhSntSNn2pwJBnlg5syZ3dSxjYjJ3d3daYc7u6lEFEU4duzYoZ07d86r1+sol8stTRRIc508efK+a6+99ovr1q1zaYNt2rRp++bNm9cfO3bMOI6D5cuXY9q0aXdTAqCvrw/FYhHPP//8skwmgxUrVgAAqtVqquVvvfVWzJgxA3v27FlE3YX7+vrwi1/8wsyfPx/33Xcf279//yN79uy5a2JiAl1dXVSbtaNQKNy6evXq2fV63ezZsyfN6Usp0dvbi9WrV+MnP/mJse71/c7Ozq9Vq9W0Hfqtt96Kq666ipXLZXP06NErFi1alFpkm6k2pexdqu7apjllMpnUBM2dOzfFAyuVCiYmJjBr1izs27fvsc7Ozjt7enpSX+306dPo6+tLsblTp06ho6MjBeOpEUK9Xn+uq6vrpr6+vpZM0qlTp9DT00OM67Qnz44dO4YfffTR7ttuuw2rVq1idj0QFXt1d3fTYQtP9ff3/zMbNqnX6xgcHAxyudxbuVxubVdXVwtLnZx20vLEmqfjcfL5PHzfTxsJ2N1RKJizDxbgnIPuQdH8uXPncPr06VfCMOyfPXv2QHd3N8bHx9PSh+Hh4ZSVTx3zaM0o6t+7d+/OfD6/as6cOSleS4hHtVp9YNasWV8+ePDg6xRscc4xODiInp4eFAqFtMylr6+vhWRdq9XQ09MDYwyoyZlNemGM4Uc/+pE5duwYvvrVr7JZs2a1UOsoKULJl2PHjmFgYCAlbVer1YueLXBJnNPulGETGgiwJZyLICEanH3am10QRRihfSgAcRPp8/RMlE4kzUXgM2mg8fFxHD9+/JWBgYFryN+02ybm83mMj48jCAJ0dHSkmjifz2NsbCydeMpM0WkVdh0LuSuE7ZLQ1ut12JF9e2c9+zS4XC6XjpWEnH5n956n+bXHQfNMARoJng0VkaCTmbfTqJTLbl834jHQ3BMPwa5WYIxhfHwc9gkjdje5bDaLkydP4uzZs4cuv/zyAdrwZBWI40DJDhvrpqj9oke9XKqlCkWvpJHsemN7wHapbTtVzE7JUdBBKp3a6NkZGMIhyYG3OYU0kfaCUX9Q+/AlwjttNjtNBk0sRb60AahTMm0Y6qtpB0SEz9kpWzpOxm7haAdfdvBHoDdpZbu3JVUu0makZIMN/dguAwVrNG82ibdSqYCsF200yuzRM1BJDAWBYRimmtRO2dJGo0PIaI4poLN7dBIaYPfmpCwVfZZcNionuaDPeanTMOzei+07nHLNFGQQUYAWgrRuoVBAvV4HtdYjAL9YLGJ4eDjtCEfpzZGRkRZGDwVdzWYTIyMjLQcOkBARCyoMQ3R0dKRAv10vJITAxMREqi0I8KfJpEwWaX+aTPKNKZAhtj110qBnpdyznYJsZ5NTQy77WESbN2ATSux6cwLk27tukMDR5iVeJWl1Eg47707oCoH4dm7fbgpM9fA0dkqLkptDm5OgN3p+yrdTCQ21yKHPkDtCQfMFNSf98cXIpuQ32aWjdl6ZJs52cmnQlNumqDWbzaapLJpk0mLUno/SZKQJCTine5GfUqlU0jQnRYlEeCZsNpPJpNrazinT4pL5p81HGCOZNhs6s+fEPkHZ9mNt8gNtKsq82L4mmVw7JUmsIdK4pF1I09JiUmaHsjr28TF2PT75yPSsQRCgs7OzpUzDbsdok7Lpme2DWGnNKHtlVxuMjIykaU5qf07uA2lNcmWoYtUmVk8pnKSlLsbXpNwo+U62ubK7HtudyEiY7cBmqmYBpJlJuOhnpG3t1tME7Far1VRjkRak3DuZHIJF7JZ9lLkgv4syX+RP2c9LJA0KMHK5HMbHx9NOH8THpAUg94jGQoReEhAav012sbUkuSfkthCcRMQJcp1o8W2NTGaZejvZbQzb+xKRcrEJHumJaclYSaDJWtlzYZOj6W8pBiBTTtaK0BpSLMQSo07LlzLrzO4HPlW9OgUKU521TUJ3sVr39oG0fz9VZ7V2tKC9yZX9f8rC2PxFmpxf5SDZD+rVDji3k4On6pFkZ8Rss23T834TjR0+qi9Gu/Bi/XraBab9eJMLAfj0+/bFaD8h7mKL1E6Raz+rp91naT8i8cN+TXWy7oXQELvQjd60PrZisNu2fBTG+IEJJ5mjCw3yUj+/VBlFu7a9kOBP1bTfDiou1q6l/bzOqTTshy2cF3qWdgI3RfF2y3Kb7dTePvyjMMYP6iXbjzSeCoS3J2EqLTqVVrDhjgv93oYf2oWz3Vdtp6PRz+0W3VORfj9szdJ+Cu+Fzra3BZP8Z/KP7bG3d8r7JL9aovVfdSEvdCRxO5WMorP2w6Omqm60Syemciem0tztLshHQTinehb7q02QJhiHombynadSAlP5/59Ys34hbWjXLU9lmtsLqtqDp/ZorF0Dk1m23xfyF6fSFJcymx+Zib6AhaEI1z6XhzIrdiubC2nKT7Rwvh/NeTFBaT+r2w5cbOGe6oCoC5n99l6aF9PKH5uJtkyxHdQR/EX0Q5v9T+jDVIL5SRbKC2rOqTrttgct9pvwzqlMsl3/ciHt2w7Ctt//UpqxvSNFuzb/sKEku0kCjdeu2qSkwVSw16XckqmQlE+UcNrEj6kCE7sZ1lRwEkE5lzL9HwaW+FHxNW1htHPWhCF/Esb5gUTr9lmGU8E5dunrVOb5Qs0//2eAOt7PiwB0ylSRL/lRSQ58lF//P63GcUQCUOG7AAAAAElFTkSuQmCC" alt="TBM LOG" class="header-logo-img">
+    <div>
+      <div class="header-title">Gestão de Operação Logística</div>
+      <div class="header-sub">Inbound & Outbound — Frota GLP Envasado</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <label class="import-btn" for="importFile">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Importar Planilha
+      <input type="file" id="importFile" accept=".xlsx,.xls" onchange="handleImport(event)">
+    </label>
+    <button class="report-btn" onclick="openReport()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      Relatório da Frota
+    </button>
+    <div class="header-badge" id="recordCount">—</div>
+  </div>
+</div>
+
+<!-- FILTERS -->
+<div class="filters-bar">
+  <div class="filter-group">
+    <span class="filter-label">Operação</span>
+    <button class="filter-btn active" data-op="AMBOS" onclick="setOpFilter(this)">Ambos</button>
+    <button class="filter-btn" data-op="CDB" onclick="setOpFilter(this)">CDB</button>
+    <button class="filter-btn" data-op="CIA" onclick="setOpFilter(this)">CIA</button>
+  </div>
+  <div class="filter-sep"></div>
+  <div class="filter-group">
+    <span class="filter-label">Período</span>
+    <button class="filter-btn active" data-period="ALL" onclick="setPeriodFilter(this)">Todo Período</button>
+    <button class="filter-btn" data-period="MONTH" onclick="setPeriodFilter(this)">Mês</button>
+    <button class="filter-btn" data-period="WEEK" onclick="setPeriodFilter(this)">Semana</button>
+    <button class="filter-btn" data-period="CUSTOM" onclick="setPeriodFilter(this)">Personalizado</button>
+  </div>
+  <div class="filter-sep"></div>
+  <div class="filter-group" id="monthSelect" style="display:none">
+    <select class="filter-select" id="filterMonth" onchange="applyFilters()">
+    </select>
+  </div>
+  <div class="filter-group" id="weekSelect" style="display:none">
+    <select class="filter-select" id="filterWeek" onchange="applyFilters()">
+    </select>
+  </div>
+  <div class="filter-group" id="customDates" style="display:none">
+    <input type="date" class="filter-date-input" id="dateFrom" onchange="applyFilters()">
+    <span style="font-size:12px;color:var(--text-muted)">até</span>
+    <input type="date" class="filter-date-input" id="dateTo" onchange="applyFilters()">
+  </div>
+  <div class="filter-sep"></div>
+  <div class="filter-group">
+    <span class="filter-label">Placa</span>
+    <select class="filter-select" id="filterPlaca" onchange="applyFilters()">
+      <option value="ALL">Todas</option>
+    </select>
+  </div>
+  <div class="filter-sep"></div>
+  <div class="filter-group">
+    <span class="filter-label">Status</span>
+    <button class="filter-btn active" data-status="ALL" onclick="setStatusFilter(this)">Todos</button>
+    <button class="filter-btn" data-status="NORMAL" onclick="setStatusFilter(this)">Normal</button>
+    <button class="filter-btn" data-status="ALERTA" onclick="setStatusFilter(this)">Alerta</button>
+    <button class="filter-btn" data-status="CRITICO" onclick="setStatusFilter(this)">Crítico</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- KPIs -->
+  <div class="kpi-grid" id="kpiGrid"></div>
+
+  <!-- CHARTS ROW -->
+  <div class="section-row">
+    <!-- Tempo Médio por Veículo -->
+    <div class="card animate-in" style="animation-delay:.1s">
+      <div class="card-header">
+        <div class="card-title">Tempo Médio por Veículo</div>
+        <div class="card-badge" id="chartVehicleBadge">—</div>
+      </div>
+      <div class="card-body">
+        <div class="bar-chart" id="vehicleBarChart"></div>
+      </div>
+    </div>
+
+    <!-- Tempo Médio por Dia -->
+    <div class="card animate-in" style="animation-delay:.2s">
+      <div class="card-header">
+        <div class="card-title">Tempo Médio Diário</div>
+        <div class="card-badge" id="chartDailyBadge">—</div>
+      </div>
+      <div class="card-body">
+        <div class="bar-chart" id="dailyBarChart"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HEATMAP -->
+  <div class="section-full">
+    <div class="card animate-in" style="animation-delay:.25s">
+      <div class="card-header">
+        <div class="card-title">Heatmap — Tempo de Operação por Veículo × Dia</div>
+        <div class="card-badge" id="heatmapBadge">h:mm</div>
+      </div>
+      <div class="card-body" style="overflow-x:auto">
+        <div id="heatmapContainer"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="section-full">
+    <div class="card animate-in" style="animation-delay:.3s">
+      <div class="card-header">
+        <div class="card-title">Registros Detalhados</div>
+        <div class="card-badge" id="tableBadge">—</div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" id="dataTable">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Placa</th>
+              <th>CDB Entrada</th>
+              <th>CDB Saída</th>
+              <th>CDB Tempo</th>
+              <th>CIA Entrada</th>
+              <th>CIA Saída</th>
+              <th>CIA Tempo</th>
+              <th>Total</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- REPORT MODAL -->
+<div class="modal-overlay" id="reportModal" onclick="closeReportOutside(event)">
+  <div class="modal">
+    <div class="modal-header" style="background:linear-gradient(135deg,#1e3a5f,#2563eb);border-bottom:none;padding:20px 24px">
+      <div style="display:flex;align-items:center;gap:14px">
+        <img src="" id="modalLogo" alt="TBM LOG" style="height:36px;width:auto">
+        <div>
+          <h2 style="color:#fff;font-size:16px;margin:0">Relatório — Análise de Status da Frota</h2>
+          <div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:2px">Gestão de Operação Logística: Inbound & Outbound</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeReport()" style="border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.8)">✕</button>
+    </div>
+    <div class="modal-body" id="reportBody"></div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeReport()">Fechar</button>
+      <button class="btn-primary" onclick="printReport()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:4px"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Imprimir
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const LOGO_URI = "data:image/png;base64,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";
+
+// ════════════════════════════════════════════════════
+// DATA
+// ════════════════════════════════════════════════════
+const RAW_DATA = [{"date": "2025-02-03", "placa": "JBG7A45", "mes": "Fevereiro", "cdb_entrada": "06:35", "cdb_saida": "10:15", "cdb_tempo_min": 220, "cia_entrada": "10:58", "cia_saida": "15:20", "cia_tempo_min": 262}, {"date": "2025-02-03", "placa": "TCD7G05", "mes": "Fevereiro", "cdb_entrada": "06:40", "cdb_saida": "10:00", "cdb_tempo_min": 200, "cia_entrada": "15:00", "cia_saida": "19:45", "cia_tempo_min": 285}, {"date": "2025-02-03", "placa": "JBG8I21", "mes": "Fevereiro", "cdb_entrada": "06:32", "cdb_saida": "10:05", "cdb_tempo_min": 213, "cia_entrada": "10:55", "cia_saida": "15:35", "cia_tempo_min": 280}, {"date": "2025-02-03", "placa": "TCD7F88", "mes": "Fevereiro", "cdb_entrada": "06:30", "cdb_saida": "10:30", "cdb_tempo_min": 240, "cia_entrada": "10:57", "cia_saida": "17:15", "cia_tempo_min": 378}, {"date": "2025-02-03", "placa": "JBJ3C81", "mes": "Fevereiro", "cdb_entrada": "06:25", "cdb_saida": "08:13", "cdb_tempo_min": 108, "cia_entrada": "08:30", "cia_saida": "12:00", "cia_tempo_min": 210}, {"date": "2025-02-03", "placa": "JBF3B17", "mes": "Fevereiro", "cdb_entrada": "06:45", "cdb_saida": "09:04", "cdb_tempo_min": 139, "cia_entrada": "15:00", "cia_saida": "20:48", "cia_tempo_min": 348}, {"date": "2025-02-03", "placa": "JBP1A21", "mes": "Fevereiro", "cdb_entrada": "06:40", "cdb_saida": "10:20", "cdb_tempo_min": 220, "cia_entrada": "15:00", "cia_saida": "20:45", "cia_tempo_min": 345}, {"date": "2025-02-03", "placa": "JBP5A37", "mes": "Fevereiro", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": null, "cia_entrada": "07:00", "cia_saida": "10:30", "cia_tempo_min": 210}, {"date": "2025-02-03", "placa": "JBP2J10", "mes": "Fevereiro", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": null, "cia_entrada": "07:00", "cia_saida": "09:45", "cia_tempo_min": 165}, {"date": "2025-02-03", "placa": "JBJ2J46", "mes": "Fevereiro", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": null, "cia_entrada": "07:00", "cia_saida": "10:15", "cia_tempo_min": 195}, {"date": "2025-02-03", "placa": "JBJ2J74", "mes": "Fevereiro", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": null, "cia_entrada": "07:00", "cia_saida": "10:30", "cia_tempo_min": 210}, {"date": "2025-02-03", "placa": "JBF5E04", "mes": "Fevereiro", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": null, "cia_entrada": "07:00", "cia_saida": "10:50", "cia_tempo_min": 230}, {"date": "2025-02-03", "placa": "JBO8E68", "mes": "Fevereiro", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": null, "cia_entrada": "07:00", "cia_saida": "10:55", "cia_tempo_min": 235}, {"date": "2025-02-04", "placa": "JBJ3C56", "mes": "Fevereiro", "cdb_entrada": "06:21", "cdb_saida": "08:27", "cdb_tempo_min": 126, "cia_entrada": "08:35", "cia_saida": "11:48", "cia_tempo_min": 193}, {"date": "2025-02-04", "placa": "JBJ2J74", "mes": "Fevereiro", "cdb_entrada": "06:30", "cdb_saida": "08:40", "cdb_tempo_min": 130, "cia_entrada": "08:52", "cia_saida": "14:00", "cia_tempo_min": 308}, {"date": "2025-02-04", "placa": "JBE3J94", "mes": "Fevereiro", "cdb_entrada": "06:15", "cdb_saida": "08:10", "cdb_tempo_min": 115, "cia_entrada": "08:15", "cia_saida": "10:20", "cia_tempo_min": 125}, {"date": "2025-02-04", "placa": "JBJ3C81", "mes": "Fevereiro", "cdb_entrada": "06:35", "cdb_saida": "08:40", "cdb_tempo_min": 125, "cia_entrada": "08:55", "cia_saida": "11:00", "cia_tempo_min": 125}, {"date": "2025-02-04", "placa": "JBJ2J46", "mes": "Fevereiro", "cdb_entrada": "06:00", "cdb_saida": "07:30", "cdb_tempo_min": 90, "cia_entrada": "07:40", "cia_saida": "10:20", "cia_tempo_min": 160}, {"date": "2025-02-04", "placa": "JBP2J10", "mes": "Fevereiro", "cdb_entrada": "06:20", "cdb_saida": "08:20", "cdb_tempo_min": 120, "cia_entrada": "08:26", "cia_saida": "12:10", "cia_tempo_min": 224}, {"date": "2025-02-04", "placa": "QTM3G92", "mes": "Fevereiro", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": null, "cia_entrada": "07:00", "cia_saida": "09:40", "cia_tempo_min": 160}, {"date": "2025-02-04", "placa": "IFU6520", "mes": "Fevereiro", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": null, "cia_entrada": "10:30", "cia_saida": "17:20", "cia_tempo_min": 410}, {"date": "2025-02-05", "placa": "JBJ2J46", "mes": "Fevereiro", "cdb_entrada": "06:10", "cdb_saida": "08:40", "cdb_tempo_min": 150, "cia_entrada": "08:50", "cia_saida": "12:50", "cia_tempo_min": 240}, {"date": "2025-02-05", "placa": "JBJ3C56", "mes": "Fevereiro", "cdb_entrada": "06:25", "cdb_saida": "09:15", "cdb_tempo_min": 170, "cia_entrada": "09:25", "cia_saida": "14:40", "cia_tempo_min": 315}, {"date": "2025-02-05", "placa": "JBJ3C81", "mes": "Fevereiro", "cdb_entrada": "06:33", "cdb_saida": "09:40", "cdb_tempo_min": 187, "cia_entrada": "09:50", "cia_saida": "15:50", "cia_tempo_min": 360}, {"date": "2025-02-05", "placa": "JBG8I21", "mes": "Fevereiro", "cdb_entrada": "06:20", "cdb_saida": "08:44", "cdb_tempo_min": 144, "cia_entrada": "08:55", "cia_saida": "11:30", "cia_tempo_min": 155}, {"date": "2025-02-05", "placa": "JBE3J94", "mes": "Fevereiro", "cdb_entrada": "08:50", "cdb_saida": "10:30", "cdb_tempo_min": 100, "cia_entrada": "10:05", "cia_saida": "14:28", "cia_tempo_min": 263}, {"date": "2025-02-05", "placa": "JBF5E04", "mes": "Fevereiro", "cdb_entrada": "06:46", "cdb_saida": "10:00", "cdb_tempo_min": 194, "cia_entrada": null, "cia_saida": null, "cia_tempo_min": null}, {"date": "2025-02-05", "placa": "JBG7A45", "mes": "Fevereiro", "cdb_entrada": "06:22", "cdb_saida": "08:45", "cdb_tempo_min": 143, "cia_entrada": "08:55", "cia_saida": "12:30", "cia_tempo_min": 215}, {"date": "2025-02-05", "placa": "JBP5A37", "mes": "Fevereiro", "cdb_entrada": "06:28", "cdb_saida": "09:33", "cdb_tempo_min": 185, "cia_entrada": "09:45", "cia_saida": "17:17", "cia_tempo_min": 452}, {"date": "2025-02-05", "placa": "JBO8E68", "mes": "Fevereiro", "cdb_entrada": "06:05", "cdb_saida": "07:50", "cdb_tempo_min": 105, "cia_entrada": "08:00", "cia_saida": "10:30", "cia_tempo_min": 150}, {"date": "2025-02-05", "placa": "JBO8E40", "mes": "Fevereiro", "cdb_entrada": "09:30", "cdb_saida": "10:47", "cdb_tempo_min": 77, "cia_entrada": "10:55", "cia_saida": "17:05", "cia_tempo_min": 370}, {"date": "2025-02-05", "placa": "JBF3B17", "mes": "Fevereiro", "cdb_entrada": "06:20", "cdb_saida": "09:38", "cdb_tempo_min": 198, "cia_entrada": "09:48", "cia_saida": "16:51", "cia_tempo_min": 423}, {"date": "2025-02-05", "placa": "QTM3G92", "mes": "Fevereiro", "cdb_entrada": "07:40", "cdb_saida": "10:30", "cdb_tempo_min": 170, "cia_entrada": null, "cia_saida": null, "cia_tempo_min": null}, {"date": "2025-02-05", "placa": "JBP1A21", "mes": "Fevereiro", "cdb_entrada": "06:12", "cdb_saida": "08:15", "cdb_tempo_min": 123, "cia_entrada": "08:35", "cia_saida": "15:45", "cia_tempo_min": 430}, {"date": "2025-02-05", "placa": "TCD7G05", "mes": "Fevereiro", "cdb_entrada": "06:25", "cdb_saida": "09:35", "cdb_tempo_min": 190, "cia_entrada": "09:44", "cia_saida": "14:40", "cia_tempo_min": 296}, {"date": "2025-02-05", "placa": "TCD7F88", "mes": "Fevereiro", "cdb_entrada": "06:07", "cdb_saida": "08:10", "cdb_tempo_min": 123, "cia_entrada": "08:35", "cia_saida": "12:00", "cia_tempo_min": 205}, {"date": "2026-04-13", "placa": "JBF5E04", "mes": "abril", "cdb_entrada": "06:18", "cdb_saida": "07:53", "cdb_tempo_min": 95, "cia_entrada": "08:08", "cia_saida": "12:04", "cia_tempo_min": 236}, {"date": "2026-04-13", "placa": "JBJ3C68", "mes": "abril", "cdb_entrada": "06:32", "cdb_saida": "08:00", "cdb_tempo_min": 88, "cia_entrada": "08:50", "cia_saida": "12:14", "cia_tempo_min": 204}, {"date": "2026-04-13", "placa": "JCR-5D19", "mes": "abril", "cdb_entrada": "12:23", "cdb_saida": "13:07", "cdb_tempo_min": 44, "cia_entrada": "13:47", "cia_saida": "18:00", "cia_tempo_min": 253}, {"date": "2026-04-13", "placa": "JBJ3C56", "mes": "abril", "cdb_entrada": "12:48", "cdb_saida": "13:50", "cdb_tempo_min": 62, "cia_entrada": "14:18", "cia_saida": "17:30", "cia_tempo_min": 192}, {"date": "2026-04-13", "placa": "JBJ3C81", "mes": "abril", "cdb_entrada": "12:56", "cdb_saida": "14:08", "cdb_tempo_min": 72, "cia_entrada": null, "cia_saida": null, "cia_tempo_min": null}, {"date": "2026-04-13", "placa": "JBJ2J46", "mes": "abril", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": null, "cia_entrada": "14:37", "cia_saida": "16:46", "cia_tempo_min": 129}, {"date": "2026-04-13", "placa": "TRD9J18", "mes": "abril", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": null, "cia_entrada": "15:45", "cia_saida": "19:38", "cia_tempo_min": 233}, {"date": "2026-04-13", "placa": "JBG8I21", "mes": "abril", "cdb_entrada": "13:52", "cdb_saida": "14:42", "cdb_tempo_min": 50, "cia_entrada": "07:32", "cia_saida": "09:18", "cia_tempo_min": 106}, {"date": "2026-04-14", "placa": "JBP5A37", "mes": "abril", "cdb_entrada": "06:14", "cdb_saida": "07:25", "cdb_tempo_min": 71, "cia_entrada": "08:04", "cia_saida": "11:58", "cia_tempo_min": 234}, {"date": "2026-04-14", "placa": "JBJ2J46", "mes": "abril", "cdb_entrada": "06:18", "cdb_saida": "07:27", "cdb_tempo_min": 69, "cia_entrada": "08:12", "cia_saida": "12:26", "cia_tempo_min": 254}, {"date": "2026-04-14", "placa": "JBF5E04", "mes": "abril", "cdb_entrada": "07:36", "cdb_saida": "09:14", "cdb_tempo_min": 98, "cia_entrada": "09:29", "cia_saida": "15:14", "cia_tempo_min": 345}, {"date": "2026-04-14", "placa": "JBE3J94", "mes": "abril", "cdb_entrada": "09:27", "cdb_saida": "10:24", "cdb_tempo_min": 57, "cia_entrada": "11:22", "cia_saida": "14:45", "cia_tempo_min": 203}, {"date": "2026-04-14", "placa": "RKZ4B72", "mes": "abril", "cdb_entrada": "10:55", "cdb_saida": "12:58", "cdb_tempo_min": 123, "cia_entrada": "13:37", "cia_saida": "15:15", "cia_tempo_min": 98}, {"date": "2026-04-14", "placa": "JBJ3C81", "mes": "abril", "cdb_entrada": "13:30", "cdb_saida": "14:19", "cdb_tempo_min": 49, "cia_entrada": "14:53", "cia_saida": "18:39", "cia_tempo_min": 226}, {"date": "2026-04-14", "placa": "JBJ3C56", "mes": "abril", "cdb_entrada": "14:14", "cdb_saida": "14:35", "cdb_tempo_min": 21, "cia_entrada": "15:50", "cia_saida": "18:52", "cia_tempo_min": 182}, {"date": "2026-04-15", "placa": "JBJ2J67", "mes": "abril", "cdb_entrada": "13:24", "cdb_saida": "14:53", "cdb_tempo_min": 89, "cia_entrada": "15:25", "cia_saida": "18:01", "cia_tempo_min": 156}, {"date": "2026-04-15", "placa": "JBJ2J46", "mes": "abril", "cdb_entrada": "06:15", "cdb_saida": "08:08", "cdb_tempo_min": 113, "cia_entrada": "08:24", "cia_saida": "11:17", "cia_tempo_min": 173}, {"date": "2026-04-15", "placa": "JCR-5D19", "mes": "abril", "cdb_entrada": "06:30", "cdb_saida": "08:11", "cdb_tempo_min": 101, "cia_entrada": "08:20", "cia_saida": "10:15", "cia_tempo_min": 115}, {"date": "2026-04-15", "placa": "JBG8I21", "mes": "abril", "cdb_entrada": "06:10", "cdb_saida": "08:21", "cdb_tempo_min": 131, "cia_entrada": "08:26", "cia_saida": "11:03", "cia_tempo_min": 157}, {"date": "2026-04-15", "placa": "JBJ3C68", "mes": "abril", "cdb_entrada": "09:03", "cdb_saida": "09:53", "cdb_tempo_min": 50, "cia_entrada": "11:21", "cia_saida": "15:39", "cia_tempo_min": 258}, {"date": "2026-04-15", "placa": "JBP1A21", "mes": "abril", "cdb_entrada": "10:10", "cdb_saida": "12:34", "cdb_tempo_min": 144, "cia_entrada": "13:22", "cia_saida": "16:52", "cia_tempo_min": 210}, {"date": "2026-04-15", "placa": "JBJ3C81", "mes": "abril", "cdb_entrada": "14:00", "cdb_saida": "14:50", "cdb_tempo_min": 50, "cia_entrada": "15:20", "cia_saida": "17:18", "cia_tempo_min": 118}, {"date": "2026-04-16", "placa": "JBJ2J46", "mes": "abril", "cdb_entrada": "07:40", "cdb_saida": "08:25", "cdb_tempo_min": 45, "cia_entrada": "08:30", "cia_saida": "12:00", "cia_tempo_min": 210}, {"date": "2026-04-16", "placa": "JBP5A37", "mes": "abril", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": null, "cia_entrada": "07:15", "cia_saida": "10:23", "cia_tempo_min": 188}, {"date": "2026-04-16", "placa": "JBJ2J46", "mes": "abril", "cdb_entrada": "07:40", "cdb_saida": "08:25", "cdb_tempo_min": 45, "cia_entrada": "08:43", "cia_saida": "10:33", "cia_tempo_min": 110}, {"date": "2026-04-16", "placa": "JCR-5D19", "mes": "abril", "cdb_entrada": "08:25", "cdb_saida": "09:45", "cdb_tempo_min": 80, "cia_entrada": "09:50", "cia_saida": "12:19", "cia_tempo_min": 149}, {"date": "2026-04-16", "placa": "JBE3J94", "mes": "abril", "cdb_entrada": "07:00", "cdb_saida": "07:52", "cdb_tempo_min": 52, "cia_entrada": "08:00", "cia_saida": "10:21", "cia_tempo_min": 141}, {"date": "2026-04-16", "placa": "JBG8I21", "mes": "abril", "cdb_entrada": "12:00", "cdb_saida": "12:51", "cdb_tempo_min": 51, "cia_entrada": "13:06", "cia_saida": "18:08", "cia_tempo_min": 302}, {"date": "2026-04-16", "placa": "JBJ3C81", "mes": "abril", "cdb_entrada": "14:35", "cdb_saida": "15:20", "cdb_tempo_min": 45, "cia_entrada": "15:54", "cia_saida": "19:04", "cia_tempo_min": 190}, {"date": "2026-04-16", "placa": "JBJ3C68", "mes": "abril", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": null, "cia_entrada": "14:52", "cia_saida": "19:12", "cia_tempo_min": 260}, {"date": "2026-04-17", "placa": "JBJ2J46", "mes": "abril", "cdb_entrada": "06:25", "cdb_saida": "08:30", "cdb_tempo_min": 125, "cia_entrada": "08:35", "cia_saida": "10:40", "cia_tempo_min": 125}, {"date": "2026-04-17", "placa": "JBP5A37", "mes": "abril", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": null, "cia_entrada": "07:15", "cia_saida": "09:35", "cia_tempo_min": 140}, {"date": "2026-04-17", "placa": "JBJ2J67", "mes": "abril", "cdb_entrada": "06:25", "cdb_saida": "07:33", "cdb_tempo_min": 68, "cia_entrada": "07:40", "cia_saida": "12:48", "cia_tempo_min": 308}, {"date": "2026-04-17", "placa": "TRD9J18", "mes": "abril", "cdb_entrada": "09:00", "cdb_saida": "10:15", "cdb_tempo_min": 75, "cia_entrada": "15:08", "cia_saida": "17:44", "cia_tempo_min": 156}, {"date": "2026-04-17", "placa": "JBJ2J74", "mes": "abril", "cdb_entrada": "10:45", "cdb_saida": "12:49", "cdb_tempo_min": 124, "cia_entrada": "14:30", "cia_saida": "16:21", "cia_tempo_min": 111}, {"date": "2026-04-17", "placa": "JCR-5D19", "mes": "abril", "cdb_entrada": "07:08", "cdb_saida": "08:47", "cdb_tempo_min": 99, "cia_entrada": "08:55", "cia_saida": "12:20", "cia_tempo_min": 205}, {"date": "2026-04-17", "placa": "RKZ4B72", "mes": "abril", "cdb_entrada": "12:00", "cdb_saida": "13:35", "cdb_tempo_min": 95, "cia_entrada": "14:17", "cia_saida": "17:09", "cia_tempo_min": 172}, {"date": "2026-04-18", "placa": "JBG8I21", "mes": "abril", "cdb_entrada": "06:48", "cdb_saida": "08:10", "cdb_tempo_min": 82, "cia_entrada": "08:10", "cia_saida": "10:36", "cia_tempo_min": 146}, {"date": "2026-04-18", "placa": "JBJ3C81", "mes": "abril", "cdb_entrada": "07:02", "cdb_saida": "08:08", "cdb_tempo_min": 66, "cia_entrada": "08:17", "cia_saida": "09:56", "cia_tempo_min": 99}, {"date": "2026-04-18", "placa": "JBP5A37", "mes": "abril", "cdb_entrada": "06:34", "cdb_saida": "08:00", "cdb_tempo_min": 86, "cia_entrada": "08:10", "cia_saida": "11:50", "cia_tempo_min": 220}, {"date": "2026-04-18", "placa": "JBJ2J67", "mes": "abril", "cdb_entrada": "06:48", "cdb_saida": "07:32", "cdb_tempo_min": 44, "cia_entrada": "07:45", "cia_saida": "09:40", "cia_tempo_min": 115}, {"date": "2026-04-18", "placa": "JCR-5D19", "mes": "abril", "cdb_entrada": "07:45", "cdb_saida": "09:00", "cdb_tempo_min": 75, "cia_entrada": "09:10", "cia_saida": "11:05", "cia_tempo_min": 115}, {"date": "2026-04-18", "placa": "JBJ2J46", "mes": "abril", "cdb_entrada": "06:30", "cdb_saida": "08:00", "cdb_tempo_min": 90, "cia_entrada": "08:10", "cia_saida": "10:00", "cia_tempo_min": 110}, {"date": "2026-04-18", "placa": "JBP1A21", "mes": "abril", "cdb_entrada": "08:20", "cdb_saida": "09:30", "cdb_tempo_min": 70, "cia_entrada": "09:45", "cia_saida": "13:00", "cia_tempo_min": 195}, {"date": "2026-04-18", "placa": "JBJ3C56", "mes": "abril", "cdb_entrada": "07:00", "cdb_saida": "08:15", "cdb_tempo_min": 75, "cia_entrada": "08:25", "cia_saida": "10:30", "cia_tempo_min": 125}, {"date": "2026-04-20", "placa": "JBJ2J74", "mes": "abril", "cdb_entrada": "06:50", "cdb_saida": "08:25", "cdb_tempo_min": 95, "cia_entrada": "08:30", "cia_saida": "09:55", "cia_tempo_min": 85}, {"date": "2026-04-20", "placa": "JBJ3C56", "mes": "abril", "cdb_entrada": "14:55", "cdb_saida": "15:23", "cdb_tempo_min": 28, "cia_entrada": "15:50", "cia_saida": "19:12", "cia_tempo_min": 202}, {"date": "2026-04-20", "placa": "JBJ3C68", "mes": "abril", "cdb_entrada": "14:00", "cdb_saida": "15:05", "cdb_tempo_min": 65, "cia_entrada": "15:56", "cia_saida": "19:15", "cia_tempo_min": 199}, {"date": "2026-04-20", "placa": "JBJ2J67", "mes": "abril", "cdb_entrada": "14:48", "cdb_saida": "15:20", "cdb_tempo_min": 32, "cia_entrada": "15:40", "cia_saida": "19:08", "cia_tempo_min": 208}, {"date": "2026-04-22", "placa": "JCR-5D19", "mes": "abril", "cdb_entrada": "06:57", "cdb_saida": "08:21", "cdb_tempo_min": 84, "cia_entrada": "08:30", "cia_saida": "10:11", "cia_tempo_min": 101}, {"date": "2026-04-22", "placa": "JBP1A21", "mes": "abril", "cdb_entrada": "07:00", "cdb_saida": "08:18", "cdb_tempo_min": 78, "cia_entrada": "08:38", "cia_saida": "10:57", "cia_tempo_min": 139}, {"date": "2026-04-22", "placa": "JBJ2J46", "mes": "abril", "cdb_entrada": "14:30", "cdb_saida": "15:30", "cdb_tempo_min": 60, "cia_entrada": "15:54", "cia_saida": "17:06", "cia_tempo_min": 72}, {"date": "2026-04-22", "placa": "TRE4I34", "mes": "abril", "cdb_entrada": "08:30", "cdb_saida": "09:30", "cdb_tempo_min": 60, "cia_entrada": "13:30", "cia_saida": "16:02", "cia_tempo_min": 152}, {"date": "2026-04-22", "placa": "JBG8I21", "mes": "abril", "cdb_entrada": "08:40", "cdb_saida": "10:05", "cdb_tempo_min": 85, "cia_entrada": "15:10", "cia_saida": "16:14", "cia_tempo_min": 64}, {"date": "2026-04-22", "placa": "JBP5A37", "mes": "abril", "cdb_entrada": "08:00", "cdb_saida": "10:00", "cdb_tempo_min": 120, "cia_entrada": "14:30", "cia_saida": "17:46", "cia_tempo_min": 196}, {"date": "2026-04-22", "placa": "TRD9J18", "mes": "abril", "cdb_entrada": "06:40", "cdb_saida": "09:54", "cdb_tempo_min": 194, "cia_entrada": "14:40", "cia_saida": "16:34", "cia_tempo_min": 114}, {"date": "2026-04-23", "placa": "JBJ2J74", "mes": "abril", "cdb_entrada": "07:25", "cdb_saida": "08:40", "cdb_tempo_min": 75, "cia_entrada": "08:59", "cia_saida": "10:12", "cia_tempo_min": 73}, {"date": "2026-04-23", "placa": "JCR-5D19", "mes": "abril", "cdb_entrada": "07:00", "cdb_saida": "09:15", "cdb_tempo_min": 135, "cia_entrada": "09:18", "cia_saida": "11:19", "cia_tempo_min": 121}, {"date": "2026-04-23", "placa": "JBJ2J67", "mes": "abril", "cdb_entrada": "07:25", "cdb_saida": "08:36", "cdb_tempo_min": 71, "cia_entrada": "08:45", "cia_saida": "11:33", "cia_tempo_min": 168}, {"date": "2026-04-23", "placa": "JBJ3C56", "mes": "abril", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": null, "cia_entrada": "14:20", "cia_saida": "16:24", "cia_tempo_min": 124}, {"date": "2026-04-23", "placa": "JBJ3C68", "mes": "abril", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": null, "cia_entrada": "14:54", "cia_saida": "17:41", "cia_tempo_min": 167}, {"date": "2026-04-23", "placa": "JBJ3C81", "mes": "abril", "cdb_entrada": "12:00", "cdb_saida": "13:45", "cdb_tempo_min": 105, "cia_entrada": "13:50", "cia_saida": "15:50", "cia_tempo_min": 120}, {"date": "2026-04-23", "placa": "JBP1A21", "mes": "abril", "cdb_entrada": "10:00", "cdb_saida": "11:00", "cdb_tempo_min": 60, "cia_entrada": "13:20", "cia_saida": "15:45", "cia_tempo_min": 145}, {"date": "2026-04-24", "placa": "JCR-5D19", "mes": "abril", "cdb_entrada": "06:55", "cdb_saida": "09:18", "cdb_tempo_min": 143, "cia_entrada": "09:55", "cia_saida": "12:54", "cia_tempo_min": 179}, {"date": "2026-04-24", "placa": "JBJ2J74", "mes": "abril", "cdb_entrada": "06:38", "cdb_saida": "07:58", "cdb_tempo_min": 80, "cia_entrada": "08:08", "cia_saida": "11:46", "cia_tempo_min": 218}, {"date": "2026-04-24", "placa": "JBJ2J46", "mes": "abril", "cdb_entrada": "06:20", "cdb_saida": "07:40", "cdb_tempo_min": 80, "cia_entrada": "07:48", "cia_saida": "10:41", "cia_tempo_min": 173}, {"date": "2026-04-24", "placa": "JBP5A37", "mes": "abril", "cdb_entrada": "06:25", "cdb_saida": "07:30", "cdb_tempo_min": 65, "cia_entrada": "07:38", "cia_saida": "10:23", "cia_tempo_min": 165}, {"date": "2026-04-24", "placa": "JBG8I21", "mes": "abril", "cdb_entrada": "07:05", "cdb_saida": "09:00", "cdb_tempo_min": 115, "cia_entrada": "09:08", "cia_saida": "11:41", "cia_tempo_min": 153}, {"date": "2026-04-24", "placa": "TRD9J18", "mes": "abril", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": null, "cia_entrada": "07:19", "cia_saida": "09:37", "cia_tempo_min": 138}, {"date": "2026-04-24", "placa": "RKZ4B72", "mes": "abril", "cdb_entrada": "10:00", "cdb_saida": "11:00", "cdb_tempo_min": 60, "cia_entrada": "15:35", "cia_saida": "18:25", "cia_tempo_min": 170}, {"date": "2026-04-24", "placa": "JBJ2J67", "mes": "abril", "cdb_entrada": "10:30", "cdb_saida": "13:00", "cdb_tempo_min": 150, "cia_entrada": "13:47", "cia_saida": "16:05", "cia_tempo_min": 138}, {"date": "2026-04-24", "placa": "JBF5E04", "mes": "abril", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": null, "cia_entrada": "07:18", "cia_saida": "10:18", "cia_tempo_min": 180}, {"date": "2026-04-24", "placa": "JBE3J94", "mes": "abril", "cdb_entrada": "11:00", "cdb_saida": "12:30", "cdb_tempo_min": 90, "cia_entrada": "12:54", "cia_saida": "15:58", "cia_tempo_min": 184}, {"date": "2026-04-25", "placa": "JBJ3C68", "mes": "abril", "cdb_entrada": "06:35", "cdb_saida": "08:32", "cdb_tempo_min": 117, "cia_entrada": "08:40", "cia_saida": "11:03", "cia_tempo_min": 143}, {"date": "2026-04-25", "placa": "TRD9J18", "mes": "abril", "cdb_entrada": "08:50", "cdb_saida": "10:20", "cdb_tempo_min": 90, "cia_entrada": "08:50", "cia_saida": "10:20", "cia_tempo_min": 90}, {"date": "2026-04-25", "placa": "JBP5A37", "mes": "abril", "cdb_entrada": "07:30", "cdb_saida": "09:15", "cdb_tempo_min": 105, "cia_entrada": "09:25", "cia_saida": "11:00", "cia_tempo_min": 95}, {"date": "2026-04-25", "placa": "JBJ2J74", "mes": "abril", "cdb_entrada": "07:00", "cdb_saida": "09:28", "cdb_tempo_min": 148, "cia_entrada": "09:38", "cia_saida": "10:59", "cia_tempo_min": 81}, {"date": "2026-04-25", "placa": "JBJ3C81", "mes": "abril", "cdb_entrada": "06:00", "cdb_saida": "07:20", "cdb_tempo_min": 80, "cia_entrada": "07:26", "cia_saida": "09:27", "cia_tempo_min": 121}, {"date": "2026-04-25", "placa": "JBJ3C56", "mes": "abril", "cdb_entrada": "07:00", "cdb_saida": "09:50", "cdb_tempo_min": 170, "cia_entrada": "10:06", "cia_saida": "10:55", "cia_tempo_min": 49}, {"date": "2026-04-25", "placa": "JBJ2J46", "mes": "abril", "cdb_entrada": "06:00", "cdb_saida": "09:30", "cdb_tempo_min": 210, "cia_entrada": "08:15", "cia_saida": "10:45", "cia_tempo_min": 150}, {"date": "2026-04-27", "placa": "JBJ3C81", "mes": "abril", "cdb_entrada": "06:15", "cdb_saida": "07:22", "cdb_tempo_min": 67, "cia_entrada": "07:41", "cia_saida": "09:50", "cia_tempo_min": 129}, {"date": "2026-04-27", "placa": "TRE4I34", "mes": "abril", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": null, "cia_entrada": "07:49", "cia_saida": "10:52", "cia_tempo_min": 183}, {"date": "2026-04-27", "placa": "TRD9J18", "mes": "abril", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": null, "cia_entrada": "09:36", "cia_saida": "15:09", "cia_tempo_min": 333}, {"date": "2026-04-27", "placa": "JBJ2J46", "mes": "abril", "cdb_entrada": "13:00", "cdb_saida": "13:50", "cdb_tempo_min": 50, "cia_entrada": "13:58", "cia_saida": "16:24", "cia_tempo_min": 146}, {"date": "2026-04-27", "placa": "JBJ2J74", "mes": "abril", "cdb_entrada": "13:45", "cdb_saida": "14:15", "cdb_tempo_min": 30, "cia_entrada": "14:30", "cia_saida": "18:11", "cia_tempo_min": 221}, {"date": "2026-04-27", "placa": "JBJ2J67", "mes": "abril", "cdb_entrada": "13:00", "cdb_saida": "14:15", "cdb_tempo_min": 75, "cia_entrada": "14:25", "cia_saida": "19:10", "cia_tempo_min": 285}, {"date": "2026-04-27", "placa": "JBJ3C81", "mes": "abril", "cdb_entrada": "14:30", "cdb_saida": "15:12", "cdb_tempo_min": 42, "cia_entrada": "15:29", "cia_saida": "17:42", "cia_tempo_min": 133}, {"date": "2026-04-27", "placa": "JBJ3C56", "mes": "abril", "cdb_entrada": "12:50", "cdb_saida": "13:40", "cdb_tempo_min": 50, "cia_entrada": "14:10", "cia_saida": "17:17", "cia_tempo_min": 187}, {"date": "2026-04-27", "placa": "JBG8I21", "mes": "abril", "cdb_entrada": "08:05", "cdb_saida": "09:07", "cdb_tempo_min": 62, "cia_entrada": "14:20", "cia_saida": "17:31", "cia_tempo_min": 191}, {"date": "2026-04-27", "placa": "JBJ3C81", "mes": "abril", "cdb_entrada": "14:30", "cdb_saida": "15:30", "cdb_tempo_min": 60, "cia_entrada": "16:00", "cia_saida": "17:40", "cia_tempo_min": 100}, {"date": "2026-04-28", "placa": "RKZ4B72", "mes": "abril", "cdb_entrada": "08:00", "cdb_saida": "09:00", "cdb_tempo_min": 60, "cia_entrada": "09:30", "cia_saida": "12:15", "cia_tempo_min": 165}, {"date": "2026-04-28", "placa": "JBE3J94", "mes": "abril", "cdb_entrada": "07:00", "cdb_saida": "07:45", "cdb_tempo_min": 45, "cia_entrada": "08:15", "cia_saida": "10:23", "cia_tempo_min": 128}, {"date": "2026-04-28", "placa": "JBJ2J74", "mes": "abril", "cdb_entrada": "13:30", "cdb_saida": "14:00", "cdb_tempo_min": 30, "cia_entrada": "14:13", "cia_saida": "16:10", "cia_tempo_min": 117}, {"date": "2026-04-28", "placa": "JBJ3C56", "mes": "abril", "cdb_entrada": "12:00", "cdb_saida": "13:10", "cdb_tempo_min": 70, "cia_entrada": "13:23", "cia_saida": "14:58", "cia_tempo_min": 95}, {"date": "2026-04-28", "placa": "JBP5A37", "mes": "abril", "cdb_entrada": "06:15", "cdb_saida": "08:15", "cdb_tempo_min": 120, "cia_entrada": "09:25", "cia_saida": "11:57", "cia_tempo_min": 152}, {"date": "2026-04-28", "placa": "JBP1A21", "mes": "abril", "cdb_entrada": "07:30", "cdb_saida": "09:40", "cdb_tempo_min": 130, "cia_entrada": "10:23", "cia_saida": "12:04", "cia_tempo_min": 101}, {"date": "2026-04-28", "placa": "JBJ2J67", "mes": "abril", "cdb_entrada": "10:00", "cdb_saida": "11:00", "cdb_tempo_min": 60, "cia_entrada": "13:35", "cia_saida": "15:11", "cia_tempo_min": 96}, {"date": "2026-04-29", "placa": "JBJ2J46", "mes": "abril", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": 0, "cia_entrada": "07:25", "cia_saida": "11:30", "cia_tempo_min": 245}, {"date": "2026-04-29", "placa": "JBJ3C81", "mes": "abril", "cdb_entrada": "07:15", "cdb_saida": "08:15", "cdb_tempo_min": 60, "cia_entrada": "08:24", "cia_saida": "11:15", "cia_tempo_min": 171}, {"date": "2026-04-29", "placa": "TRE4I34", "mes": "abril", "cdb_entrada": "06:45", "cdb_saida": "08:06", "cdb_tempo_min": 81, "cia_entrada": "08:28", "cia_saida": "13:35", "cia_tempo_min": 307}, {"date": "2026-04-29", "placa": "JBJ2J67", "mes": "abril", "cdb_entrada": "12:08", "cdb_saida": "13:27", "cdb_tempo_min": 79, "cia_entrada": "13:30", "cia_saida": "20:28", "cia_tempo_min": 418}, {"date": "2026-04-29", "placa": "JBJ2J74", "mes": "abril", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": 0, "cia_entrada": "13:28", "cia_saida": "18:42", "cia_tempo_min": 314}, {"date": "2026-04-29", "placa": "JBJ3C68", "mes": "abril", "cdb_entrada": "10:40", "cdb_saida": "13:07", "cdb_tempo_min": 147, "cia_entrada": "13:35", "cia_saida": "19:18", "cia_tempo_min": 343}, {"date": "2026-04-29", "placa": "JBG8I21", "mes": "abril", "cdb_entrada": "09:00", "cdb_saida": "10:30", "cdb_tempo_min": 90, "cia_entrada": "13:23", "cia_saida": "19:07", "cia_tempo_min": 344}, {"date": "2026-04-30", "placa": "JBJ2J46", "mes": "abril", "cdb_entrada": "06:30", "cdb_saida": "08:25", "cdb_tempo_min": 115, "cia_entrada": "08:40", "cia_saida": "12:17", "cia_tempo_min": 217}, {"date": "2026-04-30", "placa": "JBJ3C56", "mes": "abril", "cdb_entrada": "07:10", "cdb_saida": "09:10", "cdb_tempo_min": 120, "cia_entrada": "09:20", "cia_saida": "12:28", "cia_tempo_min": 188}, {"date": "2026-04-30", "placa": "JBE3J94", "mes": "abril", "cdb_entrada": "07:10", "cdb_saida": "09:40", "cdb_tempo_min": 150, "cia_entrada": "11:53", "cia_saida": "12:36", "cia_tempo_min": 43}, {"date": "2026-04-30", "placa": "JBJ3C81", "mes": "abril", "cdb_entrada": "07:45", "cdb_saida": "08:30", "cdb_tempo_min": 45, "cia_entrada": "08:42", "cia_saida": "11:58", "cia_tempo_min": 196}, {"date": "2026-04-30", "placa": "JBP5A37", "mes": "abril", "cdb_entrada": "07:45", "cdb_saida": "09:05", "cdb_tempo_min": 80, "cia_entrada": "09:18", "cia_saida": "12:31", "cia_tempo_min": 193}, {"date": "2026-04-30", "placa": "JBP1A21", "mes": "abril", "cdb_entrada": "09:25", "cdb_saida": "12:45", "cdb_tempo_min": 200, "cia_entrada": "13:03", "cia_saida": "15:33", "cia_tempo_min": 150}, {"date": "2026-04-30", "placa": "JCR-5D19", "mes": "abril", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": 0, "cia_entrada": "07:20", "cia_saida": "11:29", "cia_tempo_min": 249}, {"date": "2026-04-30", "placa": "TRD9J18", "mes": "abril", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": 0, "cia_entrada": "07:25", "cia_saida": "12:26", "cia_tempo_min": 301}, {"date": "2026-05-02", "placa": "JBJ3C81", "mes": "maio", "cdb_entrada": "07:50", "cdb_saida": "08:50", "cdb_tempo_min": 60, "cia_entrada": "09:06", "cia_saida": "11:56", "cia_tempo_min": 170}, {"date": "2026-05-02", "placa": "TRD9J18", "mes": "maio", "cdb_entrada": "06:40", "cdb_saida": "08:57", "cdb_tempo_min": 137, "cia_entrada": "09:10", "cia_saida": "13:27", "cia_tempo_min": 257}, {"date": "2026-05-02", "placa": "JBG8I21", "mes": "maio", "cdb_entrada": "06:15", "cdb_saida": "08:04", "cdb_tempo_min": 109, "cia_entrada": "08:16", "cia_saida": "10:18", "cia_tempo_min": 122}, {"date": "2026-05-02", "placa": "JBJ2J46", "mes": "maio", "cdb_entrada": "06:15", "cdb_saida": "08:05", "cdb_tempo_min": 110, "cia_entrada": "08:18", "cia_saida": "10:52", "cia_tempo_min": 154}, {"date": "2026-05-02", "placa": "JBJ2J74", "mes": "maio", "cdb_entrada": "08:00", "cdb_saida": "09:10", "cdb_tempo_min": 70, "cia_entrada": "09:27", "cia_saida": "12:23", "cia_tempo_min": 176}, {"date": "2026-05-02", "placa": "JBJ3C56", "mes": "maio", "cdb_entrada": "06:30", "cdb_saida": "07:40", "cdb_tempo_min": 70, "cia_entrada": "07:50", "cia_saida": "10:18", "cia_tempo_min": 148}, {"date": "2026-05-04", "placa": "JBP1A21", "mes": "maio", "cdb_entrada": "07:40", "cdb_saida": "09:15", "cdb_tempo_min": 95, "cia_entrada": "09:58", "cia_saida": "12:45", "cia_tempo_min": 167}, {"date": "2026-05-04", "placa": "RKZ4B72", "mes": "maio", "cdb_entrada": "08:40", "cdb_saida": "09:28", "cdb_tempo_min": 48, "cia_entrada": "15:00", "cia_saida": "18:58", "cia_tempo_min": 238}, {"date": "2026-05-04", "placa": "JBJ2J46", "mes": "maio", "cdb_entrada": "07:50", "cdb_saida": "09:40", "cdb_tempo_min": 110, "cia_entrada": "09:45", "cia_saida": "12:25", "cia_tempo_min": 160}, {"date": "2026-05-04", "placa": "JBJ3C81", "mes": "maio", "cdb_entrada": "06:15", "cdb_saida": "08:35", "cdb_tempo_min": 140, "cia_entrada": "08:48", "cia_saida": "12:12", "cia_tempo_min": 204}, {"date": "2026-05-04", "placa": "JBJ3C56", "mes": "maio", "cdb_entrada": "07:55", "cdb_saida": "08:47", "cdb_tempo_min": 52, "cia_entrada": "08:50", "cia_saida": "12:06", "cia_tempo_min": 196}, {"date": "2026-05-04", "placa": "JBJ2J74", "mes": "maio", "cdb_entrada": "08:30", "cdb_saida": "09:53", "cdb_tempo_min": 83, "cia_entrada": "10:00", "cia_saida": "16:48", "cia_tempo_min": 408}, {"date": "2026-05-04", "placa": "JBP5A37", "mes": "maio", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": null, "cia_entrada": "07:15", "cia_saida": "10:40", "cia_tempo_min": 205}, {"date": "2026-05-04", "placa": "JCR-5D19", "mes": "maio", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": null, "cia_entrada": "07:32", "cia_saida": "12:15", "cia_tempo_min": 283}, {"date": "2026-05-04", "placa": "JBG8I21", "mes": "maio", "cdb_entrada": "10:45", "cdb_saida": "13:20", "cdb_tempo_min": 155, "cia_entrada": "14:30", "cia_saida": "17:20", "cia_tempo_min": 170}, {"date": "2026-05-04", "placa": "JBE3J94", "mes": "maio", "cdb_entrada": "10:00", "cdb_saida": "13:10", "cdb_tempo_min": 190, "cia_entrada": "14:28", "cia_saida": "17:30", "cia_tempo_min": 182}, {"date": "2026-05-04", "placa": "JBJ2J67", "mes": "maio", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": 0, "cia_entrada": "07:48", "cia_saida": "10:27", "cia_tempo_min": 159}, {"date": "2026-05-04", "placa": "TRE4I34", "mes": "maio", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": 0, "cia_entrada": "07:24", "cia_saida": "10:35", "cia_tempo_min": 191}, {"date": "2026-05-05", "placa": "JBJ3C81", "mes": "maio", "cdb_entrada": "06:10", "cdb_saida": "07:20", "cdb_tempo_min": 70, "cia_entrada": "07:56", "cia_saida": "10:08", "cia_tempo_min": 132}, {"date": "2026-05-05", "placa": "JBJ2J67", "mes": "maio", "cdb_entrada": "06:25", "cdb_saida": "08:10", "cdb_tempo_min": 105, "cia_entrada": "08:16", "cia_saida": "10:17", "cia_tempo_min": 121}, {"date": "2026-05-05", "placa": "JBJ3C56", "mes": "maio", "cdb_entrada": "06:20", "cdb_saida": "07:50", "cdb_tempo_min": 90, "cia_entrada": "08:13", "cia_saida": "10:07", "cia_tempo_min": 114}, {"date": "2026-05-05", "placa": "JCR-5D19", "mes": "maio", "cdb_entrada": "06:10", "cdb_saida": "07:30", "cdb_tempo_min": 80, "cia_entrada": "08:00", "cia_saida": "10:15", "cia_tempo_min": 135}, {"date": "2026-05-05", "placa": "JBP1A21", "mes": "maio", "cdb_entrada": "08:24", "cdb_saida": "10:00", "cdb_tempo_min": 96, "cia_entrada": "10:04", "cia_saida": "12:41", "cia_tempo_min": 157}, {"date": "2026-05-05", "placa": "JBP5A37", "mes": "maio", "cdb_entrada": "06:25", "cdb_saida": "08:35", "cdb_tempo_min": 130, "cia_entrada": "08:46", "cia_saida": "10:54", "cia_tempo_min": 128}, {"date": "2026-05-05", "placa": "JBJ2J46", "mes": "maio", "cdb_entrada": "07:40", "cdb_saida": "09:05", "cdb_tempo_min": 85, "cia_entrada": "09:33", "cia_saida": "11:23", "cia_tempo_min": 110}, {"date": "2026-05-05", "placa": "JBG8I21", "mes": "maio", "cdb_entrada": "10:00", "cdb_saida": "12:30", "cdb_tempo_min": 150, "cia_entrada": "13:32", "cia_saida": "15:00", "cia_tempo_min": 88}, {"date": "2026-05-05", "placa": "JBE3J94", "mes": "maio", "cdb_entrada": "12:00", "cdb_saida": "14:00", "cdb_tempo_min": 120, "cia_entrada": "14:29", "cia_saida": "16:37", "cia_tempo_min": 128}, {"date": "2026-05-06", "placa": "JBJ2J74", "mes": "maio", "cdb_entrada": "08:00", "cdb_saida": "08:43", "cdb_tempo_min": 43, "cia_entrada": "09:04", "cia_saida": "11:44", "cia_tempo_min": 160}, {"date": "2026-05-06", "placa": "JBJ2J46", "mes": "maio", "cdb_entrada": "07:00", "cdb_saida": "08:50", "cdb_tempo_min": 110, "cia_entrada": "09:07", "cia_saida": "12:27", "cia_tempo_min": 200}, {"date": "2026-05-06", "placa": "JBJ3C81", "mes": "maio", "cdb_entrada": "06:20", "cdb_saida": "08:10", "cdb_tempo_min": 110, "cia_entrada": "08:09", "cia_saida": "11:24", "cia_tempo_min": 195}, {"date": "2026-05-06", "placa": "JBJ3C56", "mes": "maio", "cdb_entrada": "08:27", "cdb_saida": "09:20", "cdb_tempo_min": 53, "cia_entrada": "09:28", "cia_saida": "11:52", "cia_tempo_min": 144}, {"date": "2026-05-06", "placa": "RKZ4B72", "mes": "maio", "cdb_entrada": "09:06", "cdb_saida": "10:05", "cdb_tempo_min": 59, "cia_entrada": "10:56", "cia_saida": "15:00", "cia_tempo_min": 244}, {"date": "2026-05-06", "placa": "JCR-5D19", "mes": "maio", "cdb_entrada": "08:15", "cdb_saida": "09:25", "cdb_tempo_min": 70, "cia_entrada": "09:35", "cia_saida": "12:42", "cia_tempo_min": 187}, {"date": "2026-05-06", "placa": "JBP1A21", "mes": "maio", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": 0, "cia_entrada": "09:02", "cia_saida": "11:53", "cia_tempo_min": 171}, {"date": "2026-05-06", "placa": "TRD9J18", "mes": "maio", "cdb_entrada": "09:08", "cdb_saida": "10:12", "cdb_tempo_min": 64, "cia_entrada": "11:30", "cia_saida": "15:27", "cia_tempo_min": 237}, {"date": "2026-05-06", "placa": "TRE4I34", "mes": "maio", "cdb_entrada": "06:10", "cdb_saida": "10:40", "cdb_tempo_min": 270, "cia_entrada": "11:04", "cia_saida": "14:17", "cia_tempo_min": 193}, {"date": "2026-05-06", "placa": "JBJ2J67", "mes": "maio", "cdb_entrada": "10:33", "cdb_saida": "13:25", "cdb_tempo_min": 172, "cia_entrada": "13:30", "cia_saida": "15:20", "cia_tempo_min": 110}, {"date": "2026-05-06", "placa": "JBG8I21", "mes": "maio", "cdb_entrada": "10:00", "cdb_saida": "11:00", "cdb_tempo_min": 60, "cia_entrada": "13:17", "cia_saida": "16:12", "cia_tempo_min": 175}, {"date": "2026-05-06", "placa": "JBP5A37", "mes": "maio", "cdb_entrada": "12:00", "cdb_saida": "14:50", "cdb_tempo_min": 170, "cia_entrada": "15:19", "cia_saida": "18:30", "cia_tempo_min": 191}, {"date": "2026-05-07", "placa": "JBJ2J46", "mes": "maio", "cdb_entrada": "07:00", "cdb_saida": "08:20", "cdb_tempo_min": 80, "cia_entrada": "08:36", "cia_saida": "11:24", "cia_tempo_min": 168}, {"date": "2026-05-07", "placa": "JBJ3C81", "mes": "maio", "cdb_entrada": "06:15", "cdb_saida": "07:00", "cdb_tempo_min": 45, "cia_entrada": "07:23", "cia_saida": "09:12", "cia_tempo_min": 109}, {"date": "2026-05-07", "placa": "JBJ3C56", "mes": "maio", "cdb_entrada": "06:30", "cdb_saida": "08:30", "cdb_tempo_min": 120, "cia_entrada": "08:48", "cia_saida": "10:43", "cia_tempo_min": 115}, {"date": "2026-05-07", "placa": "JCR-5D19", "mes": "maio", "cdb_entrada": "07:34", "cdb_saida": "08:30", "cdb_tempo_min": 56, "cia_entrada": "09:00", "cia_saida": "11:22", "cia_tempo_min": 142}, {"date": "2026-05-07", "placa": "JBE3J94", "mes": "maio", "cdb_entrada": "10:00", "cdb_saida": "11:00", "cdb_tempo_min": 60, "cia_entrada": "11:42", "cia_saida": "14:30", "cia_tempo_min": 168}, {"date": "2026-05-07", "placa": "JBJ2J74", "mes": "maio", "cdb_entrada": "08:00", "cdb_saida": "10:00", "cdb_tempo_min": 120, "cia_entrada": "11:12", "cia_saida": "14:15", "cia_tempo_min": 183}, {"date": "2026-05-07", "placa": "TRE4I34", "mes": "maio", "cdb_entrada": "14:00", "cdb_saida": "15:30", "cdb_tempo_min": 90, "cia_entrada": "15:42", "cia_saida": "20:07", "cia_tempo_min": 265}, {"date": "2026-05-07", "placa": "JBP1A21", "mes": "maio", "cdb_entrada": "12:00", "cdb_saida": "14:15", "cdb_tempo_min": 135, "cia_entrada": "14:38", "cia_saida": "17:36", "cia_tempo_min": 178}, {"date": "2026-05-08", "placa": "JBJ2J46", "mes": "maio", "cdb_entrada": "07:00", "cdb_saida": "08:15", "cdb_tempo_min": 75, "cia_entrada": "08:24", "cia_saida": "10:40", "cia_tempo_min": 136}, {"date": "2026-05-08", "placa": "JBJ3C81", "mes": "maio", "cdb_entrada": "06:20", "cdb_saida": "08:00", "cdb_tempo_min": 100, "cia_entrada": "07:58", "cia_saida": "10:13", "cia_tempo_min": 135}, {"date": "2026-05-08", "placa": "JBJ3C56", "mes": "maio", "cdb_entrada": "06:38", "cdb_saida": "07:51", "cdb_tempo_min": 73, "cia_entrada": "08:15", "cia_saida": "10:24", "cia_tempo_min": 129}, {"date": "2026-05-08", "placa": "JCR-5D19", "mes": "maio", "cdb_entrada": "06:45", "cdb_saida": "08:10", "cdb_tempo_min": 85, "cia_entrada": "08:22", "cia_saida": "11:44", "cia_tempo_min": 202}, {"date": "2026-05-08", "placa": "JBP5A37", "mes": "maio", "cdb_entrada": "06:35", "cdb_saida": "08:36", "cdb_tempo_min": 121, "cia_entrada": "08:48", "cia_saida": "11:17", "cia_tempo_min": 149}, {"date": "2026-05-08", "placa": "JBG8I21", "mes": "maio", "cdb_entrada": "06:35", "cdb_saida": "08:34", "cdb_tempo_min": 119, "cia_entrada": "08:43", "cia_saida": "12:28", "cia_tempo_min": 225}, {"date": "2026-05-08", "placa": "RKZ4B72", "mes": "maio", "cdb_entrada": "08:13", "cdb_saida": "09:27", "cdb_tempo_min": 74, "cia_entrada": "09:35", "cia_saida": "13:37", "cia_tempo_min": 242}, {"date": "2026-05-08", "placa": "TRD9J18", "mes": "maio", "cdb_entrada": "06:40", "cdb_saida": "09:21", "cdb_tempo_min": 161, "cia_entrada": "09:29", "cia_saida": "13:36", "cia_tempo_min": 247}, {"date": "2026-05-08", "placa": "TRE4I34", "mes": "maio", "cdb_entrada": "13:00", "cdb_saida": "14:00", "cdb_tempo_min": 60, "cia_entrada": "14:20", "cia_saida": "17:04", "cia_tempo_min": 164}, {"date": "2026-05-09", "placa": "JBJ2J46", "mes": "maio", "cdb_entrada": "06:15", "cdb_saida": "07:30", "cdb_tempo_min": 75, "cia_entrada": "07:46", "cia_saida": "09:35", "cia_tempo_min": 109}, {"date": "2026-05-09", "placa": "JBP5A37", "mes": "maio", "cdb_entrada": "06:35", "cdb_saida": "07:15", "cdb_tempo_min": 40, "cia_entrada": "07:28", "cia_saida": "10:26", "cia_tempo_min": 178}, {"date": "2026-05-09", "placa": "JBJ2J74", "mes": "maio", "cdb_entrada": "06:30", "cdb_saida": "07:30", "cdb_tempo_min": 60, "cia_entrada": "07:52", "cia_saida": "10:40", "cia_tempo_min": 168}, {"date": "2026-05-09", "placa": "JBJ3C56", "mes": "maio", "cdb_entrada": "06:37", "cdb_saida": "07:44", "cdb_tempo_min": 67, "cia_entrada": "08:09", "cia_saida": "10:45", "cia_tempo_min": 156}, {"date": "2026-05-09", "placa": "JBJ3C81", "mes": "maio", "cdb_entrada": "06:20", "cdb_saida": "07:25", "cdb_tempo_min": 65, "cia_entrada": "07:44", "cia_saida": "09:55", "cia_tempo_min": 131}, {"date": "2026-05-09", "placa": "JCR-5D19", "mes": "maio", "cdb_entrada": "07:40", "cdb_saida": "08:48", "cdb_tempo_min": 68, "cia_entrada": "09:27", "cia_saida": "11:45", "cia_tempo_min": 138}, {"date": "2026-05-09", "placa": "JBE3J94", "mes": "maio", "cdb_entrada": "07:37", "cdb_saida": "08:24", "cdb_tempo_min": 47, "cia_entrada": "08:36", "cia_saida": "11:01", "cia_tempo_min": 145}, {"date": "2026-05-09", "placa": "JBJ2J67", "mes": "maio", "cdb_entrada": "06:35", "cdb_saida": "08:27", "cdb_tempo_min": 112, "cia_entrada": "08:33", "cia_saida": "11:22", "cia_tempo_min": 169}, {"date": "2026-05-09", "placa": "JBP1A21", "mes": "maio", "cdb_entrada": "08:21", "cdb_saida": "09:30", "cdb_tempo_min": 69, "cia_entrada": "09:40", "cia_saida": "12:10", "cia_tempo_min": 150}, {"date": "2026-05-11", "placa": "JBJ2J46", "mes": "maio", "cdb_entrada": "06:50", "cdb_saida": "07:20", "cdb_tempo_min": 30, "cia_entrada": "07:35", "cia_saida": "09:56", "cia_tempo_min": 141}, {"date": "2026-05-11", "placa": "RKZ4B72", "mes": "maio", "cdb_entrada": "06:40", "cdb_saida": "08:20", "cdb_tempo_min": 100, "cia_entrada": "08:32", "cia_saida": "11:15", "cia_tempo_min": 163}, {"date": "2026-05-11", "placa": "JBP5A37", "mes": "maio", "cdb_entrada": "06:50", "cdb_saida": "08:05", "cdb_tempo_min": 75, "cia_entrada": "08:27", "cia_saida": "10:00", "cia_tempo_min": 93}, {"date": "2026-05-11", "placa": "TRD9J18", "mes": "maio", "cdb_entrada": "07:45", "cdb_saida": "09:15", "cdb_tempo_min": 90, "cia_entrada": "09:34", "cia_saida": "13:20", "cia_tempo_min": 226}, {"date": "2026-05-11", "placa": "JBJ3C81", "mes": "maio", "cdb_entrada": "12:00", "cdb_saida": "12:45", "cdb_tempo_min": 45, "cia_entrada": "12:52", "cia_saida": "16:42", "cia_tempo_min": 230}, {"date": "2026-05-11", "placa": "JBJ2J74", "mes": "maio", "cdb_entrada": "12:00", "cdb_saida": "13:30", "cdb_tempo_min": 90, "cia_entrada": "13:39", "cia_saida": "17:32", "cia_tempo_min": 233}, {"date": "2026-05-11", "placa": "JBJ2J67", "mes": "maio", "cdb_entrada": "12:15", "cdb_saida": "13:49", "cdb_tempo_min": 94, "cia_entrada": "14:12", "cia_saida": "17:48", "cia_tempo_min": 216}, {"date": "2026-05-11", "placa": "JBJ3C56", "mes": "maio", "cdb_entrada": "06:00", "cdb_saida": "07:15", "cdb_tempo_min": 75, "cia_entrada": "07:21", "cia_saida": "09:34", "cia_tempo_min": 133}, {"date": "2026-05-12", "placa": "JCR-5D19", "mes": "maio", "cdb_entrada": "07:24", "cdb_saida": "08:00", "cdb_tempo_min": 36, "cia_entrada": "08:37", "cia_saida": "12:10", "cia_tempo_min": 213}, {"date": "2026-05-12", "placa": "JBG8I21", "mes": "maio", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": 0, "cia_entrada": "07:17", "cia_saida": "10:39", "cia_tempo_min": 202}, {"date": "2026-05-12", "placa": "JBJ2J46", "mes": "maio", "cdb_entrada": "06:30", "cdb_saida": "07:40", "cdb_tempo_min": 70, "cia_entrada": "07:51", "cia_saida": "09:29", "cia_tempo_min": 98}, {"date": "2026-05-12", "placa": "TRE4I34", "mes": "maio", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": 0, "cia_entrada": "07:19", "cia_saida": "11:33", "cia_tempo_min": 254}, {"date": "2026-05-12", "placa": "JBF5E04", "mes": "maio", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": 0, "cia_entrada": "07:23", "cia_saida": "11:51", "cia_tempo_min": 268}, {"date": "2026-05-12", "placa": "JBJ3C81", "mes": "maio", "cdb_entrada": "12:00", "cdb_saida": "14:30", "cdb_tempo_min": 150, "cia_entrada": "15:19", "cia_saida": "17:39", "cia_tempo_min": 140}, {"date": "2026-05-12", "placa": "JBJ2J67", "mes": "maio", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": 0, "cia_entrada": "15:46", "cia_saida": "19:07", "cia_tempo_min": 201}, {"date": "2026-05-12", "placa": "JBE3J94", "mes": "maio", "cdb_entrada": "06:28", "cdb_saida": "07:27", "cdb_tempo_min": 59, "cia_entrada": "14:28", "cia_saida": "17:35", "cia_tempo_min": 187}, {"date": "2026-05-12", "placa": "JBJ2J46", "mes": "maio", "cdb_entrada": "06:30", "cdb_saida": "07:30", "cdb_tempo_min": 60, "cia_entrada": "07:51", "cia_saida": "10:13", "cia_tempo_min": 142}, {"date": "2026-05-13", "placa": "JBJ2J74", "mes": "maio", "cdb_entrada": "06:30", "cdb_saida": "08:30", "cdb_tempo_min": 120, "cia_entrada": "08:41", "cia_saida": "10:09", "cia_tempo_min": 88}, {"date": "2026-05-13", "placa": "JBJ3C56", "mes": "maio", "cdb_entrada": "06:00", "cdb_saida": "09:30", "cdb_tempo_min": 210, "cia_entrada": "09:57", "cia_saida": "12:56", "cia_tempo_min": 179}, {"date": "2026-05-13", "placa": "JCR-5D19", "mes": "maio", "cdb_entrada": "07:55", "cdb_saida": "09:30", "cdb_tempo_min": 95, "cia_entrada": "09:38", "cia_saida": "13:01", "cia_tempo_min": 203}, {"date": "2026-05-13", "placa": "JBP5A37", "mes": "maio", "cdb_entrada": "06:30", "cdb_saida": "08:40", "cdb_tempo_min": 130, "cia_entrada": "08:49", "cia_saida": "11:22", "cia_tempo_min": 153}, {"date": "2026-05-13", "placa": "JBG8I21", "mes": "maio", "cdb_entrada": "06:30", "cdb_saida": "10:43", "cdb_tempo_min": 253, "cia_entrada": "10:52", "cia_saida": "14:57", "cia_tempo_min": 245}, {"date": "2026-05-13", "placa": "JBP1A21", "mes": "maio", "cdb_entrada": "10:30", "cdb_saida": "13:00", "cdb_tempo_min": 150, "cia_entrada": "13:37", "cia_saida": "18:05", "cia_tempo_min": 268}, {"date": "2026-05-13", "placa": "TRD9J18", "mes": "maio", "cdb_entrada": "06:25", "cdb_saida": "10:18", "cdb_tempo_min": 233, "cia_entrada": "10:37", "cia_saida": "13:33", "cia_tempo_min": 176}, {"date": "2026-05-13", "placa": "JBF5E04", "mes": "maio", "cdb_entrada": "13:00", "cdb_saida": "14:00", "cdb_tempo_min": 60, "cia_entrada": "14:18", "cia_saida": "18:00", "cia_tempo_min": 222}, {"date": "2026-05-13", "placa": "JBJ3C81", "mes": "maio", "cdb_entrada": "15:00", "cdb_saida": "15:30", "cdb_tempo_min": 30, "cia_entrada": "15:43", "cia_saida": "18:12", "cia_tempo_min": 149}, {"date": "2026-05-13", "placa": "TRE4I34", "mes": "maio", "cdb_entrada": "11:00", "cdb_saida": "11:50", "cdb_tempo_min": 50, "cia_entrada": "12:03", "cia_saida": "16:50", "cia_tempo_min": 287}, {"date": "2026-05-14", "placa": "JBJ2J46", "mes": "maio", "cdb_entrada": "06:30", "cdb_saida": "09:00", "cdb_tempo_min": 150, "cia_entrada": "09:21", "cia_saida": "12:43", "cia_tempo_min": 202}, {"date": "2026-05-14", "placa": "JBJ2J74", "mes": "maio", "cdb_entrada": "06:45", "cdb_saida": "08:30", "cdb_tempo_min": 105, "cia_entrada": "08:43", "cia_saida": "11:22", "cia_tempo_min": 159}, {"date": "2026-05-14", "placa": "JBJ3C56", "mes": "maio", "cdb_entrada": "06:38", "cdb_saida": "08:15", "cdb_tempo_min": 97, "cia_entrada": "08:41", "cia_saida": "11:29", "cia_tempo_min": 168}, {"date": "2026-05-14", "placa": "JCR-5D19", "mes": "maio", "cdb_entrada": "07:45", "cdb_saida": "09:40", "cdb_tempo_min": 115, "cia_entrada": "09:46", "cia_saida": "13:48", "cia_tempo_min": 242}, {"date": "2026-05-14", "placa": "JBJ2J67", "mes": "maio", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": 0, "cia_entrada": "08:30", "cia_saida": "11:27", "cia_tempo_min": 177}, {"date": "2026-05-14", "placa": "JBE3J94", "mes": "maio", "cdb_entrada": "06:39", "cdb_saida": "10:03", "cdb_tempo_min": 204, "cia_entrada": "10:28", "cia_saida": "13:39", "cia_tempo_min": 191}, {"date": "2026-05-14", "placa": "JBP5A37", "mes": "maio", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": 0, "cia_entrada": "07:25", "cia_saida": "14:25", "cia_tempo_min": 420}, {"date": "2026-05-14", "placa": "TRD9J18", "mes": "maio", "cdb_entrada": "12:05", "cdb_saida": "13:15", "cdb_tempo_min": 70, "cia_entrada": "13:28", "cia_saida": "17:09", "cia_tempo_min": 221}, {"date": "2026-05-14", "placa": "JBG8I21", "mes": "maio", "cdb_entrada": "08:54", "cdb_saida": "10:19", "cdb_tempo_min": 85, "cia_entrada": "13:37", "cia_saida": "17:06", "cia_tempo_min": 209}, {"date": "2026-05-14", "placa": "JBJ3C81", "mes": "maio", "cdb_entrada": "14:20", "cdb_saida": "15:30", "cdb_tempo_min": 70, "cia_entrada": "15:55", "cia_saida": "19:30", "cia_tempo_min": 215}, {"date": "2026-05-15", "placa": "JBJ2J46", "mes": "maio", "cdb_entrada": "07:30", "cdb_saida": "08:30", "cdb_tempo_min": 60, "cia_entrada": "08:41", "cia_saida": "12:02", "cia_tempo_min": 201}, {"date": "2026-05-15", "placa": "JBJ2J74", "mes": "maio", "cdb_entrada": "07:00", "cdb_saida": "08:15", "cdb_tempo_min": 75, "cia_entrada": "08:28", "cia_saida": "12:08", "cia_tempo_min": 220}, {"date": "2026-05-15", "placa": "JBJ3C56", "mes": "maio", "cdb_entrada": "06:28", "cdb_saida": "07:25", "cdb_tempo_min": 57, "cia_entrada": "07:48", "cia_saida": "13:25", "cia_tempo_min": 337}, {"date": "2026-05-15", "placa": "JCR-5D19", "mes": "maio", "cdb_entrada": "06:30", "cdb_saida": "08:50", "cdb_tempo_min": 140, "cia_entrada": "09:29", "cia_saida": "13:19", "cia_tempo_min": 230}, {"date": "2026-05-15", "placa": "JBE3J94", "mes": "maio", "cdb_entrada": "07:43", "cdb_saida": "08:54", "cdb_tempo_min": 71, "cia_entrada": "09:01", "cia_saida": "11:12", "cia_tempo_min": 131}, {"date": "2026-05-15", "placa": "JBJ2J67", "mes": "maio", "cdb_entrada": "06:13", "cdb_saida": "07:42", "cdb_tempo_min": 89, "cia_entrada": "07:52", "cia_saida": "11:10", "cia_tempo_min": 198}, {"date": "2026-05-15", "placa": "JBP1A21", "mes": "maio", "cdb_entrada": "06:32", "cdb_saida": "09:15", "cdb_tempo_min": 163, "cia_entrada": "09:31", "cia_saida": "13:05", "cia_tempo_min": 214}, {"date": "2026-05-15", "placa": "JBG8I21", "mes": "maio", "cdb_entrada": "10:00", "cdb_saida": "12:30", "cdb_tempo_min": 150, "cia_entrada": "13:10", "cia_saida": "16:00", "cia_tempo_min": 170}, {"date": "2026-05-15", "placa": "TRE4I34", "mes": "maio", "cdb_entrada": "13:00", "cdb_saida": "14:30", "cdb_tempo_min": 90, "cia_entrada": "15:00", "cia_saida": "17:00", "cia_tempo_min": 120}, {"date": "2026-05-16", "placa": "JBJ2J46", "mes": "maio", "cdb_entrada": "06:30", "cdb_saida": "07:10", "cdb_tempo_min": 40, "cia_entrada": "07:27", "cia_saida": "11:00", "cia_tempo_min": 213}, {"date": "2026-05-16", "placa": "JBJ3C81", "mes": "maio", "cdb_entrada": "06:40", "cdb_saida": "07:55", "cdb_tempo_min": 75, "cia_entrada": "08:04", "cia_saida": "10:11", "cia_tempo_min": 127}, {"date": "2026-05-16", "placa": "JBP5A37", "mes": "maio", "cdb_entrada": "07:11", "cdb_saida": "08:44", "cdb_tempo_min": 93, "cia_entrada": "08:57", "cia_saida": "11:06", "cia_tempo_min": 129}, {"date": "2026-05-16", "placa": "TRD9J18", "mes": "maio", "cdb_entrada": "08:18", "cdb_saida": "09:33", "cdb_tempo_min": 75, "cia_entrada": "09:43", "cia_saida": "12:30", "cia_tempo_min": 167}, {"date": "2026-05-16", "placa": "JBJ2J67", "mes": "maio", "cdb_entrada": "06:35", "cdb_saida": "08:35", "cdb_tempo_min": 120, "cia_entrada": "08:44", "cia_saida": "12:12", "cia_tempo_min": 208}, {"date": "2026-05-16", "placa": "JBP1A21", "mes": "maio", "cdb_entrada": "06:30", "cdb_saida": "08:10", "cdb_tempo_min": 100, "cia_entrada": "08:38", "cia_saida": "11:52", "cia_tempo_min": 194}, {"date": "2026-05-18", "placa": "JBJ2J74", "mes": "maio", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": 0, "cia_entrada": "07:25", "cia_saida": "09:29", "cia_tempo_min": 124}, {"date": "2026-05-18", "placa": "JBJ3C56", "mes": "maio", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": 0, "cia_entrada": "07:19", "cia_saida": "09:12", "cia_tempo_min": 113}, {"date": "2026-05-18", "placa": "JBE3J94", "mes": "maio", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": 0, "cia_entrada": "07:23", "cia_saida": "09:20", "cia_tempo_min": 117}, {"date": "2026-05-18", "placa": "JBJ2J46", "mes": "maio", "cdb_entrada": "07:40", "cdb_saida": "08:40", "cdb_tempo_min": 60, "cia_entrada": "08:58", "cia_saida": "11:00", "cia_tempo_min": 122}, {"date": "2026-05-18", "placa": "JBJ3C81", "mes": "maio", "cdb_entrada": "06:25", "cdb_saida": "07:45", "cdb_tempo_min": 80, "cia_entrada": "07:56", "cia_saida": "09:45", "cia_tempo_min": 109}, {"date": "2026-05-18", "placa": "JCR-5D19", "mes": "maio", "cdb_entrada": "06:28", "cdb_saida": "07:48", "cdb_tempo_min": 80, "cia_entrada": "08:22", "cia_saida": "10:49", "cia_tempo_min": 147}, {"date": "2026-05-18", "placa": "TRE4I34", "mes": "maio", "cdb_entrada": "06:30", "cdb_saida": "09:05", "cdb_tempo_min": 155, "cia_entrada": "09:08", "cia_saida": "11:59", "cia_tempo_min": 171}, {"date": "2026-05-18", "placa": "JBF5E04", "mes": "maio", "cdb_entrada": "08:00", "cdb_saida": "10:10", "cdb_tempo_min": 130, "cia_entrada": "10:19", "cia_saida": "14:25", "cia_tempo_min": 246}, {"date": "2026-05-18", "placa": "JBP5A37", "mes": "maio", "cdb_entrada": "08:30", "cdb_saida": "12:52", "cdb_tempo_min": 262, "cia_entrada": "13:58", "cia_saida": "19:19", "cia_tempo_min": 321}, {"date": "2026-05-18", "placa": "JBG8I21", "mes": "maio", "cdb_entrada": "07:54", "cdb_saida": "13:15", "cdb_tempo_min": 321, "cia_entrada": "15:27", "cia_saida": "17:42", "cia_tempo_min": 135}, {"date": "2026-05-19", "placa": "JCR-5D19", "mes": "maio", "cdb_entrada": "06:46", "cdb_saida": "07:40", "cdb_tempo_min": 54, "cia_entrada": "07:53", "cia_saida": "11:09", "cia_tempo_min": 196}, {"date": "2026-05-19", "placa": "JBJ2J46", "mes": "maio", "cdb_entrada": "06:15", "cdb_saida": "07:30", "cdb_tempo_min": 75, "cia_entrada": "07:40", "cia_saida": "10:48", "cia_tempo_min": 188}, {"date": "2026-05-19", "placa": "JBJ2J74", "mes": "maio", "cdb_entrada": "06:30", "cdb_saida": "08:30", "cdb_tempo_min": 120, "cia_entrada": "08:44", "cia_saida": "11:58", "cia_tempo_min": 194}, {"date": "2026-05-19", "placa": "JBJ3C56", "mes": "maio", "cdb_entrada": "06:30", "cdb_saida": "09:30", "cdb_tempo_min": 180, "cia_entrada": "09:50", "cia_saida": "11:56", "cia_tempo_min": 126}, {"date": "2026-05-19", "placa": "TRE4I34", "mes": "maio", "cdb_entrada": "06:15", "cdb_saida": "07:20", "cdb_tempo_min": 65, "cia_entrada": "07:44", "cia_saida": "11:19", "cia_tempo_min": 215}, {"date": "2026-05-19", "placa": "TRD9J18", "mes": "maio", "cdb_entrada": "06:44", "cdb_saida": "08:10", "cdb_tempo_min": 86, "cia_entrada": "08:20", "cia_saida": "11:23", "cia_tempo_min": 183}, {"date": "2026-05-19", "placa": "JBE3J94", "mes": "maio", "cdb_entrada": "10:00", "cdb_saida": "11:00", "cdb_tempo_min": 60, "cia_entrada": "12:30", "cia_saida": "15:28", "cia_tempo_min": 178}, {"date": "2026-05-19", "placa": "JBJ3C81", "mes": "maio", "cdb_entrada": "14:30", "cdb_saida": "15:30", "cdb_tempo_min": 60, "cia_entrada": "15:41", "cia_saida": "17:36", "cia_tempo_min": 115}, {"date": "2026-05-19", "placa": "JBP1A21", "mes": "maio", "cdb_entrada": "09:45", "cdb_saida": "11:00", "cdb_tempo_min": 75, "cia_entrada": "11:37", "cia_saida": "15:16", "cia_tempo_min": 219}, {"date": "2026-05-20", "placa": "JBJ2J46", "mes": "maio", "cdb_entrada": "06:46", "cdb_saida": "07:25", "cdb_tempo_min": 39, "cia_entrada": "07:41", "cia_saida": "09:00", "cia_tempo_min": 79}, {"date": "2026-05-20", "placa": "JBJ2J74", "mes": "maio", "cdb_entrada": "08:30", "cdb_saida": "10:10", "cdb_tempo_min": 100, "cia_entrada": "10:06", "cia_saida": "11:51", "cia_tempo_min": 105}, {"date": "2026-05-20", "placa": "JBJ3C56", "mes": "maio", "cdb_entrada": "07:55", "cdb_saida": "09:17", "cdb_tempo_min": 82, "cia_entrada": "09:38", "cia_saida": "11:18", "cia_tempo_min": 100}, {"date": "2026-05-20", "placa": "JCR-5D19", "mes": "maio", "cdb_entrada": "06:40", "cdb_saida": "08:26", "cdb_tempo_min": 106, "cia_entrada": "08:42", "cia_saida": "10:11", "cia_tempo_min": 89}, {"date": "2026-05-20", "placa": "JBJ2J67", "mes": "maio", "cdb_entrada": "09:06", "cdb_saida": "10:40", "cdb_tempo_min": 94, "cia_entrada": "10:45", "cia_saida": "13:07", "cia_tempo_min": 142}, {"date": "2026-05-20", "placa": "TRD9J18", "mes": "maio", "cdb_entrada": "09:03", "cdb_saida": "10:57", "cdb_tempo_min": 114, "cia_entrada": "11:32", "cia_saida": "15:44", "cia_tempo_min": 252}, {"date": "2026-05-20", "placa": "JBP5A37", "mes": "maio", "cdb_entrada": "09:00", "cdb_saida": "11:00", "cdb_tempo_min": 120, "cia_entrada": "09:59", "cia_saida": "11:46", "cia_tempo_min": 107}, {"date": "2026-05-20", "placa": "JBJ3C81", "mes": "maio", "cdb_entrada": "14:00", "cdb_saida": "14:45", "cdb_tempo_min": 45, "cia_entrada": "15:01", "cia_saida": "17:25", "cia_tempo_min": 144}, {"date": "2026-05-20", "placa": "JBG8I21", "mes": "maio", "cdb_entrada": "09:00", "cdb_saida": "10:30", "cdb_tempo_min": 90, "cia_entrada": "14:25", "cia_saida": "17:16", "cia_tempo_min": 171}, {"date": "2026-05-20", "placa": "TRE4I34", "mes": "maio", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": 0, "cia_entrada": "14:35", "cia_saida": "17:08", "cia_tempo_min": 153}, {"date": "2026-05-20", "placa": "JBP1A21", "mes": "maio", "cdb_entrada": null, "cdb_saida": null, "cdb_tempo_min": 0, "cia_entrada": "14:00", "cia_saida": "16:25", "cia_tempo_min": 145}, {"date": "2026-05-20", "placa": "JBF5E04", "mes": "maio", "cdb_entrada": "09:05", "cdb_saida": "10:00", "cdb_tempo_min": 55, "cia_entrada": "11:00", "cia_saida": "16:40", "cia_tempo_min": 340}];
+
+// Normalize plates
+let DATA = RAW_DATA.map(r => {
+  const rec = {...r};
+  if (rec.placa === 'RKZ-4B72') rec.placa = 'RKZ4B72';
+  return rec;
+});
+
+// ════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════
+let filterOp = 'AMBOS';
+let filterPeriod = 'ALL';
+let filterPlaca = 'ALL';
+let filterStatus = 'ALL';
+
+// ════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════
+function init() {
+  populateFilterOptions();
+  applyFilters();
+}
+
+function populateFilterOptions() {
+  // Placas
+  const placas = [...new Set(DATA.map(r => r.placa))].sort();
+  const sel = document.getElementById('filterPlaca');
+  placas.forEach(p => {
+    const o = document.createElement('option');
+    o.value = p; o.textContent = p;
+    sel.appendChild(o);
+  });
+
+  // Months
+  const months = [...new Set(DATA.map(r => r.date.substring(0,7)))].sort();
+  const msel = document.getElementById('filterMonth');
+  months.forEach(m => {
+    const o = document.createElement('option');
+    o.value = m;
+    const [y, mo] = m.split('-');
+    const names = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    o.textContent = `${names[parseInt(mo)]} ${y}`;
+    msel.appendChild(o);
+  });
+
+  // Weeks
+  const dates = [...new Set(DATA.map(r => r.date))].sort();
+  const weeks = {};
+  dates.forEach(d => {
+    const dt = new Date(d + 'T12:00:00');
+    const wk = getWeekKey(dt);
+    if (!weeks[wk]) weeks[wk] = { start: d, end: d };
+    else weeks[wk].end = d;
+  });
+  const wsel = document.getElementById('filterWeek');
+  Object.keys(weeks).sort().forEach(wk => {
+    const o = document.createElement('option');
+    o.value = wk;
+    o.textContent = `${fmtDateShort(weeks[wk].start)} — ${fmtDateShort(weeks[wk].end)}`;
+    wsel.appendChild(o);
+  });
+
+  // Date inputs
+  const dateFrom = document.getElementById('dateFrom');
+  const dateTo = document.getElementById('dateTo');
+  dateFrom.value = dates[0];
+  dateTo.value = dates[dates.length - 1];
+}
+
+function getWeekKey(dt) {
+  const d = new Date(dt);
+  d.setHours(0,0,0,0);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  d.setDate(diff);
+  return d.toISOString().substring(0,10);
+}
+
+// ════════════════════════════════════════════════════
+// FILTERS
+// ════════════════════════════════════════════════════
+function setOpFilter(btn) {
+  document.querySelectorAll('[data-op]').forEach(b => {
+    b.classList.remove('active','active-cdb','active-cia');
+  });
+  filterOp = btn.dataset.op;
+  if (filterOp === 'CDB') btn.classList.add('active-cdb');
+  else if (filterOp === 'CIA') btn.classList.add('active-cia');
+  else btn.classList.add('active');
+  applyFilters();
+}
+
+function setPeriodFilter(btn) {
+  document.querySelectorAll('[data-period]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filterPeriod = btn.dataset.period;
+
+  document.getElementById('monthSelect').style.display = filterPeriod === 'MONTH' ? 'flex' : 'none';
+  document.getElementById('weekSelect').style.display = filterPeriod === 'WEEK' ? 'flex' : 'none';
+  document.getElementById('customDates').style.display = filterPeriod === 'CUSTOM' ? 'flex' : 'none';
+  applyFilters();
+}
+
+function setStatusFilter(btn) {
+  document.querySelectorAll('[data-status]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filterStatus = btn.dataset.status;
+  applyFilters();
+}
+
+function getRecordStatus(r) {
+  const cdbLvl = getStatusLevel(r.cdb_tempo_min);
+  const ciaLvl = getStatusLevel(r.cia_tempo_min);
+  return Math.max(cdbLvl, ciaLvl);
+}
+
+function getFilteredData() {
+  let d = DATA;
+
+  // Placa
+  if (filterPlaca !== 'ALL') d = d.filter(r => r.placa === filterPlaca);
+
+  // Period
+  if (filterPeriod === 'MONTH') {
+    const m = document.getElementById('filterMonth').value;
+    d = d.filter(r => r.date.startsWith(m));
+  } else if (filterPeriod === 'WEEK') {
+    const wk = document.getElementById('filterWeek').value;
+    d = d.filter(r => {
+      const dt = new Date(r.date + 'T12:00:00');
+      return getWeekKey(dt) === wk;
+    });
+  } else if (filterPeriod === 'CUSTOM') {
+    const from = document.getElementById('dateFrom').value;
+    const to = document.getElementById('dateTo').value;
+    if (from) d = d.filter(r => r.date >= from);
+    if (to) d = d.filter(r => r.date <= to);
+  }
+
+  // Status
+  if (filterStatus !== 'ALL') {
+    d = d.filter(r => {
+      const lvl = getRecordStatus(r);
+      if (filterStatus === 'CRITICO') return lvl === 3;
+      if (filterStatus === 'ALERTA') return lvl === 2;
+      if (filterStatus === 'NORMAL') return lvl === 1;
+      return true;
+    });
+  }
+
+  return d;
+}
+
+function applyFilters() {
+  filterPlaca = document.getElementById('filterPlaca').value;
+  const data = getFilteredData();
+  renderKPIs(data);
+  renderVehicleChart(data);
+  renderDailyChart(data);
+  renderHeatmap(data);
+  renderTable(data);
+  document.getElementById('recordCount').textContent = `${data.length} registros`;
+}
+
+// ════════════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════════════
+function fmtMin(min) {
+  if (min == null || min === 0) return '—';
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return `${h}h${String(m).padStart(2,'0')}`;
+}
+
+function fmtDateShort(d) {
+  if (!d) return '';
+  const [y,m,day] = d.split('-');
+  return `${day}/${m}`;
+}
+
+function fmtDateFull(d) {
+  if (!d) return '';
+  const [y,m,day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
+
+function getEffectiveTempo(r) {
+  if (filterOp === 'CDB') return r.cdb_tempo_min || 0;
+  if (filterOp === 'CIA') return r.cia_tempo_min || 0;
+  return (r.cdb_tempo_min || 0) + (r.cia_tempo_min || 0);
+}
+
+// ════════════════════════════════════════════════════
+// KPIs
+// ════════════════════════════════════════════════════
+function renderKPIs(data) {
+  const totalVeiculos = new Set(data.map(r => r.placa)).size;
+  const totalDias = new Set(data.map(r => r.date)).size;
+
+  // CDB metrics
+  const cdbTempos = data.map(r => r.cdb_tempo_min).filter(t => t && t > 0);
+  const cdbAvg = cdbTempos.length ? Math.round(cdbTempos.reduce((a,b)=>a+b,0) / cdbTempos.length) : 0;
+  const cdbMin = cdbTempos.length ? Math.min(...cdbTempos) : 0;
+  const cdbMax = cdbTempos.length ? Math.max(...cdbTempos) : 0;
+  let cdbCrit = 0, cdbAlert = 0;
+  cdbTempos.forEach(t => { const l = getStatusLevel(t); if (l===3) cdbCrit++; else if (l===2) cdbAlert++; });
+
+  // CIA metrics
+  const ciaTempos = data.map(r => r.cia_tempo_min).filter(t => t && t > 0);
+  const ciaAvg = ciaTempos.length ? Math.round(ciaTempos.reduce((a,b)=>a+b,0) / ciaTempos.length) : 0;
+  const ciaMin = ciaTempos.length ? Math.min(...ciaTempos) : 0;
+  const ciaMax = ciaTempos.length ? Math.max(...ciaTempos) : 0;
+  let ciaCrit = 0, ciaAlert = 0;
+  ciaTempos.forEach(t => { const l = getStatusLevel(t); if (l===3) ciaCrit++; else if (l===2) ciaAlert++; });
+
+  let kpis = [];
+
+  if (filterOp === 'CDB') {
+    kpis = [
+      { label: 'Tempo Médio CDB', value: fmtMin(cdbAvg), sub: `de ${cdbTempos.length} operações`, color: 'var(--accent-cdb)' },
+      { label: 'Tempo Mínimo CDB', value: fmtMin(cdbMin), sub: 'menor operação', color: 'var(--accent-cia)' },
+      { label: 'Tempo Máximo CDB', value: fmtMin(cdbMax), sub: 'maior operação', color: cdbMax > 180 ? 'var(--accent-red)' : cdbMax > 120 ? 'var(--accent-warn)' : 'var(--accent-cia)' },
+      { label: 'Veículos Ativos', value: totalVeiculos, sub: `em ${totalDias} dia(s)`, color: 'var(--text)' },
+      { label: 'Críticos CDB (>3h)', value: cdbCrit, sub: 'operações', color: cdbCrit > 0 ? 'var(--accent-red)' : 'var(--accent-cia)' },
+      { label: 'Alertas CDB (2h–3h)', value: cdbAlert, sub: 'operações', color: cdbAlert > 0 ? 'var(--accent-warn)' : 'var(--accent-cia)' },
+    ];
+  } else if (filterOp === 'CIA') {
+    kpis = [
+      { label: 'Tempo Médio CIA', value: fmtMin(ciaAvg), sub: `de ${ciaTempos.length} operações`, color: 'var(--accent-cia)' },
+      { label: 'Tempo Mínimo CIA', value: fmtMin(ciaMin), sub: 'menor operação', color: 'var(--accent-cia)' },
+      { label: 'Tempo Máximo CIA', value: fmtMin(ciaMax), sub: 'maior operação', color: ciaMax > 180 ? 'var(--accent-red)' : ciaMax > 120 ? 'var(--accent-warn)' : 'var(--accent-cia)' },
+      { label: 'Veículos Ativos', value: totalVeiculos, sub: `em ${totalDias} dia(s)`, color: 'var(--text)' },
+      { label: 'Críticos CIA (>3h)', value: ciaCrit, sub: 'operações', color: ciaCrit > 0 ? 'var(--accent-red)' : 'var(--accent-cia)' },
+      { label: 'Alertas CIA (2h–3h)', value: ciaAlert, sub: 'operações', color: ciaAlert > 0 ? 'var(--accent-warn)' : 'var(--accent-cia)' },
+    ];
+  } else {
+    const allTempos = data.map(r => getEffectiveTempo(r)).filter(t => t > 0);
+    const allAvg = allTempos.length ? Math.round(allTempos.reduce((a,b)=>a+b,0) / allTempos.length) : 0;
+    const allMin = allTempos.length ? Math.min(...allTempos) : 0;
+    const allMax = allTempos.length ? Math.max(...allTempos) : 0;
+    let totalCrit = 0, totalAlert = 0;
+    data.forEach(r => {
+      const w = Math.max(getStatusLevel(r.cdb_tempo_min), getStatusLevel(r.cia_tempo_min));
+      if (w===3) totalCrit++; else if (w===2) totalAlert++;
+    });
+
+    kpis = [
+      { label: 'Tempo Médio (CDB+CIA)', value: fmtMin(allAvg), sub: `de ${allTempos.length} operações`, color: 'var(--accent-cdb)' },
+      { label: 'Média CDB (Destroca)', value: fmtMin(cdbAvg), sub: `${cdbTempos.length} registros`, color: 'var(--accent-cdb)' },
+      { label: 'Média CIA (Carregamento)', value: fmtMin(ciaAvg), sub: `${ciaTempos.length} registros`, color: 'var(--accent-cia)' },
+      { label: 'Tempo Mínimo', value: fmtMin(allMin), sub: 'menor operação', color: 'var(--accent-cia)' },
+      { label: 'Tempo Máximo', value: fmtMin(allMax), sub: 'maior operação', color: allMax > 180 ? 'var(--accent-red)' : allMax > 120 ? 'var(--accent-warn)' : 'var(--accent-cia)' },
+      { label: 'Veículos Ativos', value: totalVeiculos, sub: `em ${totalDias} dia(s)`, color: 'var(--text)' },
+      { label: 'Críticos (>3h)', value: totalCrit, sub: 'operações', color: totalCrit > 0 ? 'var(--accent-red)' : 'var(--accent-cia)' },
+      { label: 'Alertas (2h–3h)', value: totalAlert, sub: 'operações', color: totalAlert > 0 ? 'var(--accent-warn)' : 'var(--accent-cia)' },
+    ];
+  }
+
+  const grid = document.getElementById('kpiGrid');
+  grid.innerHTML = kpis.map((k, i) => `
+    <div class="kpi-card animate-in" style="animation-delay:${i*50}ms">
+      <div class="kpi-label"><span class="kpi-dot" style="background:${k.color}"></span>${k.label}</div>
+      <div class="kpi-value" style="color:${k.color}">${k.value}</div>
+      <div class="kpi-sub">${k.sub}</div>
+    </div>
+  `).join('');
+}
+
+// ════════════════════════════════════════════════════
+// VEHICLE BAR CHART
+// ════════════════════════════════════════════════════
+function renderVehicleChart(data) {
+  const map = {};
+  data.forEach(r => {
+    if (!map[r.placa]) map[r.placa] = { cdb:[], cia:[] };
+    if (r.cdb_tempo_min && r.cdb_tempo_min > 0) map[r.placa].cdb.push(r.cdb_tempo_min);
+    if (r.cia_tempo_min && r.cia_tempo_min > 0) map[r.placa].cia.push(r.cia_tempo_min);
+  });
+
+  let entries = Object.entries(map).map(([placa, v]) => {
+    const cdbAvg = v.cdb.length ? Math.round(v.cdb.reduce((a,b)=>a+b,0)/v.cdb.length) : 0;
+    const ciaAvg = v.cia.length ? Math.round(v.cia.reduce((a,b)=>a+b,0)/v.cia.length) : 0;
+    return { placa, cdbAvg, ciaAvg, total: cdbAvg + ciaAvg };
+  });
+
+  entries.sort((a,b) => b.total - a.total);
+  entries = entries.slice(0, 15);
+
+  const maxVal = Math.max(...entries.map(e => Math.max(e.cdbAvg, e.ciaAvg, e.total)), 1);
+
+  const container = document.getElementById('vehicleBarChart');
+  document.getElementById('chartVehicleBadge').textContent = `Top ${entries.length}`;
+
+  const showCdb = filterOp !== 'CIA';
+  const showCia = filterOp !== 'CDB';
+
+  container.innerHTML = `<div class="bar-chart-inner">${entries.map(e => {
+    let html = '';
+    if (showCdb) {
+      const w = (e.cdbAvg / maxVal * 100).toFixed(1);
+      html += `<div class="bar-row">
+        <div class="bar-label">${e.placa}</div>
+        <div class="bar-track">
+          <div class="bar-fill cdb" style="width:${w}%"><span>${fmtMin(e.cdbAvg)}</span></div>
+        </div>
+      </div>`;
+    }
+    if (showCia) {
+      const w = (e.ciaAvg / maxVal * 100).toFixed(1);
+      html += `<div class="bar-row">
+        <div class="bar-label">${showCdb ? '' : e.placa}</div>
+        <div class="bar-track">
+          <div class="bar-fill cia" style="width:${w}%"><span>${fmtMin(e.ciaAvg)}</span></div>
+        </div>
+      </div>`;
+    }
+    return html;
+  }).join('')}</div>`;
+}
+
+// ════════════════════════════════════════════════════
+// DAILY BAR CHART
+// ════════════════════════════════════════════════════
+function renderDailyChart(data) {
+  const map = {};
+  data.forEach(r => {
+    if (!map[r.date]) map[r.date] = { cdb:[], cia:[] };
+    if (r.cdb_tempo_min && r.cdb_tempo_min > 0) map[r.date].cdb.push(r.cdb_tempo_min);
+    if (r.cia_tempo_min && r.cia_tempo_min > 0) map[r.date].cia.push(r.cia_tempo_min);
+  });
+
+  const entries = Object.entries(map).sort((a,b) => a[0].localeCompare(b[0])).map(([date, v]) => {
+    const cdbAvg = v.cdb.length ? Math.round(v.cdb.reduce((a,b)=>a+b,0)/v.cdb.length) : 0;
+    const ciaAvg = v.cia.length ? Math.round(v.cia.reduce((a,b)=>a+b,0)/v.cia.length) : 0;
+    return { date, cdbAvg, ciaAvg };
+  });
+
+  const maxVal = Math.max(...entries.map(e => Math.max(e.cdbAvg, e.ciaAvg)), 1);
+  const container = document.getElementById('dailyBarChart');
+  document.getElementById('chartDailyBadge').textContent = `${entries.length} dias`;
+
+  const showCdb = filterOp !== 'CIA';
+  const showCia = filterOp !== 'CDB';
+
+  container.innerHTML = `<div class="bar-chart-inner">${entries.map(e => {
+    let html = '';
+    if (showCdb) {
+      const w = (e.cdbAvg / maxVal * 100).toFixed(1);
+      html += `<div class="bar-row">
+        <div class="bar-label">${fmtDateShort(e.date)}</div>
+        <div class="bar-track">
+          <div class="bar-fill cdb" style="width:${w}%"><span>${fmtMin(e.cdbAvg)}</span></div>
+        </div>
+      </div>`;
+    }
+    if (showCia) {
+      const w = (e.ciaAvg / maxVal * 100).toFixed(1);
+      html += `<div class="bar-row">
+        <div class="bar-label">${showCdb ? '' : fmtDateShort(e.date)}</div>
+        <div class="bar-track">
+          <div class="bar-fill cia" style="width:${w}%"><span>${fmtMin(e.ciaAvg)}</span></div>
+        </div>
+      </div>`;
+    }
+    return html;
+  }).join('')}</div>`;
+}
+
+// ════════════════════════════════════════════════════
+// HEATMAP
+// ════════════════════════════════════════════════════
+function renderHeatmap(data) {
+  const dates = [...new Set(data.map(r => r.date))].sort();
+  const placas = [...new Set(data.map(r => r.placa))].sort();
+
+  if (dates.length === 0 || placas.length === 0) {
+    document.getElementById('heatmapContainer').innerHTML = '<p style="color:var(--text-muted);font-size:13px">Sem dados para exibir</p>';
+    return;
+  }
+
+  // Build lookup
+  const lookup = {};
+  data.forEach(r => {
+    const key = `${r.placa}|${r.date}`;
+    const t = getEffectiveTempo(r);
+    lookup[key] = t;
+  });
+
+  const allTempos = Object.values(lookup).filter(t => t > 0);
+  const maxT = allTempos.length ? Math.max(...allTempos) : 1;
+
+  const cols = dates.length + 1;
+  const container = document.getElementById('heatmapContainer');
+
+  let html = `<div class="heatmap-grid" style="grid-template-columns: 100px repeat(${dates.length}, minmax(52px, 1fr));">`;
+
+  // Header row
+  html += `<div class="heatmap-header"></div>`;
+  dates.forEach(d => {
+    html += `<div class="heatmap-header">${fmtDateShort(d)}</div>`;
+  });
+
+  // Data rows
+  placas.forEach(placa => {
+    html += `<div class="heatmap-row-label">${placa}</div>`;
+    dates.forEach(d => {
+      const key = `${placa}|${d}`;
+      const t = lookup[key] || 0;
+      let bg = '#f5f5f5';
+      let color = '#ccc';
+      if (t > 0) {
+        const intensity = Math.min(t / maxT, 1);
+        if (filterOp === 'CIA') {
+          const r = Math.round(5 + (1 - intensity) * 230);
+          const g = Math.round(150 + (1 - intensity) * 90);
+          const b = Math.round(105 + (1 - intensity) * 120);
+          bg = `rgb(${r},${g},${b})`;
+        } else {
+          const r = Math.round(37 + (1 - intensity) * 200);
+          const g = Math.round(99 + (1 - intensity) * 140);
+          const b = Math.round(235 + (1 - intensity) * 20);
+          bg = `rgb(${r},${g},${b})`;
+        }
+        color = intensity > 0.5 ? '#fff' : '#333';
+      }
+      html += `<div class="heatmap-cell" style="background:${bg};color:${color}" title="${placa} — ${fmtDateFull(d)}: ${fmtMin(t)}">${t > 0 ? fmtMin(t) : ''}</div>`;
+    });
+  });
+
+  html += `</div>`;
+  container.innerHTML = html;
+}
+
+function getStatusLevel(min) {
+  if (!min || min <= 0) return 0; // no data
+  if (min <= 120) return 1;       // normal
+  if (min <= 180) return 2;       // alerta
+  return 3;                       // critico
+}
+
+function getStatusTag(level) {
+  if (level === 3) return '<span class="tag tag-critical">CRÍTICO</span>';
+  if (level === 2) return '<span class="tag tag-warn">ALERTA</span>';
+  if (level === 1) return '<span class="tag tag-normal">OPERAÇÃO OK</span>';
+  return '';
+}
+
+// ════════════════════════════════════════════════════
+// TABLE
+// ════════════════════════════════════════════════════
+function renderTable(data) {
+  const sorted = [...data].sort((a,b) => {
+    if (a.date !== b.date) return a.date.localeCompare(b.date);
+    return a.placa.localeCompare(b.placa);
+  });
+
+  document.getElementById('tableBadge').textContent = `${sorted.length} linhas`;
+
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = sorted.map(r => {
+    const total = (r.cdb_tempo_min || 0) + (r.cia_tempo_min || 0);
+    const cdbLevel = getStatusLevel(r.cdb_tempo_min);
+    const ciaLevel = getStatusLevel(r.cia_tempo_min);
+    const worstLevel = Math.max(cdbLevel, ciaLevel);
+    const statusTag = getStatusTag(worstLevel);
+
+    return `<tr>
+      <td>${fmtDateFull(r.date)}</td>
+      <td style="font-weight:600">${r.placa}</td>
+      <td class="cell-time">${r.cdb_entrada || '—'}</td>
+      <td class="cell-time">${r.cdb_saida || '—'}</td>
+      <td class="cell-tempo-cdb">${r.cdb_tempo_min && r.cdb_tempo_min > 0 ? fmtMin(r.cdb_tempo_min) : '—'}</td>
+      <td class="cell-time">${r.cia_entrada || '—'}</td>
+      <td class="cell-time">${r.cia_saida || '—'}</td>
+      <td class="cell-tempo-cia">${r.cia_tempo_min && r.cia_tempo_min > 0 ? fmtMin(r.cia_tempo_min) : '—'}</td>
+      <td style="font-weight:700">${total > 0 ? fmtMin(total) : '—'}</td>
+      <td>${statusTag}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════
+// REPORT — CRITICAL VEHICLES
+// ════════════════════════════════════════════════════
+function openReport() {
+  const data = getFilteredData();
+  generateReport(data);
+  document.getElementById('modalLogo').src = LOGO_URI;
+  document.getElementById('reportModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeReport() {
+  document.getElementById('reportModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function closeReportOutside(e) {
+  if (e.target === e.currentTarget) closeReport();
+}
+function printReport() {
+  const body = document.getElementById('reportBody').innerHTML;
+  const win = window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html><head><title>Relatório — Análise de Status da Frota</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+      body{font-family:'DM Sans',sans-serif;padding:0;color:#1a1a1a;font-size:13px;background:#fff;margin:0}
+      .print-header{background:linear-gradient(135deg,#1e3a5f,#2563eb);padding:24px 32px;display:flex;align-items:center;justify-content:space-between;border-radius:0 0 12px 12px}
+      .print-header-left{display:flex;align-items:center;gap:16px}
+      .print-content{padding:24px 32px}
+      .tag{display:inline-block;padding:3px 10px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase}
+      .tag-critical{background:#fef2f2;color:#dc2626}
+      .tag-warn{background:#fef9c3;color:#a16207}
+      .tag-normal{background:#dcfce7;color:#16a34a}
+      .report-records-table{width:100%;border-collapse:collapse;font-size:11px}
+      .report-records-table th{text-align:left;padding:10px 12px;font-weight:600;color:#666;font-size:9px;text-transform:uppercase;border-bottom:2px solid #ddd;background:#f5f5f5}
+      .report-records-table td{padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:10px;border-bottom:1px solid #eee}
+      @media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important} body{margin:0;padding:0} .print-header{border-radius:0}}
+    </style></head><body>
+    <div class="print-header">
+      <div class="print-header-left">
+        <img src="${LOGO_URI}" alt="TBM LOG" style="height:40px;width:auto">
+        <div>
+          <div style="font-size:18px;font-weight:700;color:#fff">Gestão de Operação Logística</div>
+          <div style="font-size:12px;color:rgba(255,255,255,.8)">Inbound & Outbound — Frota GLP Envasado</div>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:11px;color:rgba(255,255,255,.7)">Relatório gerado em</div>
+        <div style="font-size:13px;font-weight:600;color:#fff">${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</div>
+      </div>
+    </div>
+    <div class="print-content">
+      <h2 style="font-size:17px;margin:0 0 20px;color:#1a1a1a">Veículos — Análise de Status</h2>
+      ${body}
+    </div>
+  </body></html>`);
+  win.document.close();
+  setTimeout(() => win.print(), 500);
+}
+
+function generateReport(data) {
+  const vehicleMap = {};
+  data.forEach(r => {
+    if (!vehicleMap[r.placa]) vehicleMap[r.placa] = { criticalCount:0, alertCount:0, tempos:[], maxDate:'', maxVal:0, ops:0 };
+    const v = vehicleMap[r.placa];
+    const cdbLvl = getStatusLevel(r.cdb_tempo_min);
+    const ciaLvl = getStatusLevel(r.cia_tempo_min);
+    const worst = Math.max(cdbLvl, ciaLvl);
+    const total = (r.cdb_tempo_min || 0) + (r.cia_tempo_min || 0);
+    if (total > 0) { v.tempos.push(total); v.ops++; }
+    if (worst === 3) v.criticalCount++;
+    else if (worst === 2) v.alertCount++;
+    const maxIndiv = Math.max(r.cdb_tempo_min||0, r.cia_tempo_min||0);
+    if (maxIndiv > v.maxVal) { v.maxVal = maxIndiv; v.maxDate = r.date; }
+  });
+
+  const allVehicles = Object.entries(vehicleMap)
+    .filter(([_, v]) => v.ops > 0)
+    .map(([placa, v]) => {
+      const avg = v.tempos.length ? Math.round(v.tempos.reduce((a,b)=>a+b,0)/v.tempos.length) : 0;
+      let status = 1;
+      if (v.criticalCount > 0) status = 3;
+      else if (v.alertCount > 0) status = 2;
+      return { placa, avg, max: v.maxVal, maxDate: v.maxDate, critical: v.criticalCount, alert: v.alertCount, ops: v.ops, status };
+    })
+    .sort((a,b) => b.status - a.status || b.critical - a.critical || b.max - a.max);
+
+  const body = document.getElementById('reportBody');
+
+  if (allVehicles.length === 0) {
+    body.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted)">
+      <div style="font-size:48px;margin-bottom:12px">—</div>
+      <div style="font-size:16px;font-weight:600">Sem dados no período selecionado</div>
+    </div>`;
+    return;
+  }
+
+  const countCrit = allVehicles.filter(v => v.status === 3).length;
+  const countAlert = allVehicles.filter(v => v.status === 2).length;
+  const countNormal = allVehicles.filter(v => v.status === 1).length;
+
+  body.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px">
+      <div style="text-align:center;padding:18px;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.05)">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#dc2626;margin-bottom:6px">CRÍTICO</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:36px;font-weight:700;color:#dc2626">${countCrit}</div>
+        <div style="font-size:11px;color:#888;margin-top:4px">veículo${countCrit !== 1 ? 's' : ''}</div>
+      </div>
+      <div style="text-align:center;padding:18px;background:#fef9c3;border:1px solid #fde68a;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.05)">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#a16207;margin-bottom:6px">ALERTA</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:36px;font-weight:700;color:#a16207">${countAlert}</div>
+        <div style="font-size:11px;color:#888;margin-top:4px">veículo${countAlert !== 1 ? 's' : ''}</div>
+      </div>
+      <div style="text-align:center;padding:18px;background:#dcfce7;border:1px solid #bbf7d0;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.05)">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#16a34a;margin-bottom:6px">OPERAÇÃO OK</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:36px;font-weight:700;color:#16a34a">${countNormal}</div>
+        <div style="font-size:11px;color:#888;margin-top:4px">veículo${countNormal !== 1 ? 's' : ''}</div>
+      </div>
+    </div>
+
+    <div style="border:1px solid #e5e5e5;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05)">
+    <table class="report-records-table" style="width:100%;margin:0">
+      <thead>
+        <tr style="background:#f5f5f5">
+          <th style="padding:12px 14px">Placa</th>
+          <th style="text-align:center;padding:12px 14px">Status</th>
+          <th style="text-align:center;padding:12px 14px">Críticos (&gt;3h)</th>
+          <th style="text-align:center;padding:12px 14px">Alertas (2h–3h)</th>
+          <th style="text-align:right;padding:12px 14px">Média</th>
+          <th style="text-align:right;padding:12px 14px">Pico</th>
+          <th style="padding:12px 14px">Data Pico</th>
+          <th style="text-align:center;padding:12px 14px">Total de Operações</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${allVehicles.map(v => {
+          const rowBg = v.status===3 ? 'background:#fef2f2' : v.status===2 ? 'background:#fffdf5' : 'background:#f7fdf9';
+          return `<tr style="${rowBg}">
+          <td style="font-weight:700;padding:10px 14px">${v.placa}</td>
+          <td style="text-align:center;padding:10px 14px">${getStatusTag(v.status)}</td>
+          <td style="text-align:center;padding:10px 14px">${v.critical > 0 ? '<span class="tag tag-critical">'+v.critical+'</span>' : '—'}</td>
+          <td style="text-align:center;padding:10px 14px">${v.alert > 0 ? '<span class="tag tag-warn">'+v.alert+'</span>' : '—'}</td>
+          <td style="text-align:right;padding:10px 14px">${fmtMin(v.avg)}</td>
+          <td style="text-align:right;font-weight:700;padding:10px 14px;color:${v.status===3?'#dc2626':v.status===2?'#a16207':'#16a34a'}">${fmtMin(v.max)}</td>
+          <td style="padding:10px 14px">${fmtDateFull(v.maxDate)}</td>
+          <td style="text-align:center;padding:10px 14px">${v.ops}</td>
+        </tr>`}).join('')}
+      </tbody>
+    </table>
+    </div>
+  `;
+}
+
+// ════════════════════════════════════════════════════
+// IMPORT SPREADSHEET
+// ════════════════════════════════════════════════════
+function handleImport(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type:'array', cellDates:false, raw:true });
+      const imported = [];
+
+      workbook.SheetNames.forEach(sheetName => {
+        const ws = workbook.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(ws, { header:1, raw:true });
+        if (rows.length < 3) return;
+
+        for (let i = 2; i < rows.length; i++) {
+          const row = rows[i];
+          if (!row || row.length < 2) continue;
+
+          const rawDate = row[0];
+          const rawPlaca = row[1];
+          if (!rawDate || !rawPlaca) continue;
+
+          // Parse date: Excel serial number or string
+          let dateStr = null;
+          if (typeof rawDate === 'number') {
+            const d = new Date(Math.round((rawDate - 25569) * 86400000));
+            dateStr = d.toISOString().substring(0,10);
+          } else if (typeof rawDate === 'string') {
+            const parts = rawDate.split('/');
+            if (parts.length === 3) {
+              // dd/mm/yyyy or mm/dd/yyyy — try dd/mm/yyyy first
+              if (parseInt(parts[2]) > 100) {
+                dateStr = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+              }
+            } else if (rawDate.includes('-')) {
+              dateStr = rawDate.substring(0,10);
+            }
+          }
+          if (!dateStr) continue;
+
+          // Parse time of day (entrada/saida): Excel fraction → HH:MM
+          function parseTime(val) {
+            if (val == null || val === '' || val === 0) return null;
+            if (typeof val === 'number') {
+              // Excel time fraction (0.25 = 06:00)
+              const totalMin = Math.round(val * 24 * 60);
+              const h = Math.floor(totalMin / 60) % 24;
+              const m = totalMin % 60;
+              return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+            }
+            if (typeof val === 'string') {
+              const clean = val.replace(/\s/g,'');
+              if (clean.includes(':')) return clean.substring(0,5);
+            }
+            return null;
+          }
+
+          // Parse duration (TEMPO): Excel fraction → total minutes
+          // Key: TEMPO 1:35 in Excel = time(1,35,0) = serial 0.06597...
+          // So val * 24 * 60 = 95 minutes. Always treat as fraction.
+          function parseDuration(val) {
+            if (val == null || val === '' || val === 0) return null;
+            if (typeof val === 'number') {
+              if (val < 1) {
+                // Excel time fraction
+                return Math.round(val * 24 * 60);
+              } else if (val >= 1 && val < 24) {
+                // Could be hours as decimal (unlikely but safe)
+                return Math.round(val * 60);
+              } else {
+                // Already in minutes
+                return Math.round(val);
+              }
+            }
+            if (typeof val === 'string') {
+              const clean = val.replace(/\s/g,'');
+              if (clean.includes(':')) {
+                const parts = clean.split(':').map(Number);
+                if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+                  return parts[0] * 60 + parts[1];
+                }
+              }
+              const num = parseFloat(clean);
+              if (!isNaN(num)) {
+                if (num < 1) return Math.round(num * 24 * 60);
+                return Math.round(num);
+              }
+            }
+            return null;
+          }
+
+          let placa = String(rawPlaca).trim();
+          if (placa === 'RKZ-4B72') placa = 'RKZ4B72';
+
+          imported.push({
+            date: dateStr,
+            placa: placa,
+            mes: sheetName,
+            cdb_entrada: parseTime(row[2]),
+            cdb_saida: parseTime(row[3]),
+            cdb_tempo_min: parseDuration(row[4]),
+            cia_entrada: parseTime(row[5]),
+            cia_saida: parseTime(row[6]),
+            cia_tempo_min: parseDuration(row[7]),
+          });
+        }
+      });
+
+      if (imported.length === 0) {
+        alert('Nenhum dado válido encontrado na planilha. Verifique se o formato está correto.');
+        return;
+      }
+
+      DATA = imported;
+
+      // Reset filters
+      document.getElementById('filterPlaca').innerHTML = '<option value="ALL">Todas</option>';
+      document.getElementById('filterMonth').innerHTML = '';
+      document.getElementById('filterWeek').innerHTML = '';
+      populateFilterOptions();
+      filterOp = 'AMBOS';
+      filterPeriod = 'ALL';
+      filterPlaca = 'ALL';
+      filterStatus = 'ALL';
+      document.querySelectorAll('[data-op]').forEach(b => b.classList.remove('active','active-cdb','active-cia'));
+      document.querySelector('[data-op="AMBOS"]').classList.add('active');
+      document.querySelectorAll('[data-period]').forEach(b => b.classList.remove('active'));
+      document.querySelector('[data-period="ALL"]').classList.add('active');
+      document.querySelectorAll('[data-status]').forEach(b => b.classList.remove('active'));
+      document.querySelector('[data-status="ALL"]').classList.add('active');
+      document.getElementById('monthSelect').style.display = 'none';
+      document.getElementById('weekSelect').style.display = 'none';
+      document.getElementById('customDates').style.display = 'none';
+
+      applyFilters();
+      alert(`Importação concluída: ${imported.length} registros carregados.`);
+
+    } catch(err) {
+      alert('Erro ao processar planilha: ' + err.message);
+      console.error(err);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+  event.target.value = '';
+}
+
+// ════════════════════════════════════════════════════
+// BOOT
+// ════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
